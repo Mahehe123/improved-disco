@@ -974,6 +974,14 @@ let data = (() => {
         }
       });
 
+      // ── MIGRATE: fix imported work expenses that have claimable:false ──
+      parsed.transactions.forEach(t => {
+        if (t.type === 'expense' && t.context === 'work' && t.claimable === false) {
+          t.claimable = true;
+          t.claimStatus = t.claimStatus || 'pending';
+        }
+      });
+
       return parsed;
     }
   } catch(e) {}
@@ -2857,6 +2865,9 @@ function executeImport() {
       if (catObj && !catObj.subs.includes(r.subRaw)) catObj.subs.push(r.subRaw);
     }
 
+    // Auto-set claimable for work expenses — same logic as manual entry
+    const isWorkExpense = r.context === 'work' && r.type === 'expense';
+
     data.transactions.push({
       id: uid(),
       date: r.date,
@@ -2870,9 +2881,9 @@ function executeImport() {
       notes: r.note || '',
       tags: [],
       recurring: false,
-      claimable: false,
+      claimable: isWorkExpense,
       claimMonth: null,
-      claimStatus: null,
+      claimStatus: isWorkExpense ? 'pending' : null,
       createdAt: Date.now()
     });
     imported++;
