@@ -673,8 +673,8 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
       <div class="form-group">
         <label class="form-label">Type</label>
         <div class="toggle-row">
-          <button class="toggle-btn active income" onclick="setTxType('income',this)" id="typeIncome">Income</button>
-          <button class="toggle-btn expense" onclick="setTxType('expense',this)" id="typeExpense">Expense</button>
+          <button class="toggle-btn income" onclick="setTxType('income',this)" id="typeIncome">Income</button>
+          <button class="toggle-btn active expense" onclick="setTxType('expense',this)" id="typeExpense">Expense</button>
         </div>
       </div>
       <!-- Date -->
@@ -792,15 +792,15 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
       <div id="catList" style="margin-bottom:16px;"></div>
       <div class="divider"></div>
       <div style="margin-top:12px;">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Category Name</label>
-            <input type="text" class="form-input" id="newCatName" placeholder="e.g. Transport">
+        <div class="form-group">
+          <label class="form-label">Category Name</label>
+          <input type="text" class="form-input" id="newCatName" placeholder="e.g. Holiday">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pick an Emoji</label>
+          <div id="emojiPicker" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px;background:var(--paper-dark);border-radius:var(--radius-sm);border:1px solid var(--paper-darker);">
           </div>
-          <div class="form-group">
-            <label class="form-label">Emoji</label>
-            <input type="text" class="form-input" id="newCatEmoji" placeholder="🚗" maxlength="2">
-          </div>
+          <input type="hidden" id="newCatEmoji" value="📌">
         </div>
         <button class="btn-primary" onclick="addCategory()">Add Category</button>
       </div>
@@ -901,6 +901,10 @@ function defaultData() {
       { code: 'USD', rate: 4.47 },
       { code: 'SGD', rate: 3.31 },
       { code: 'EUR', rate: 4.85 },
+      { code: 'TWD', rate: 0.139 },
+      { code: 'JPY', rate: 0.030 },
+      { code: 'CNY', rate: 0.616 },
+      { code: 'HKD', rate: 0.573 },
     ],
     categories: {
       income: [
@@ -911,11 +915,14 @@ function defaultData() {
       ],
       expense: [
         { id: 'food', name: 'Food', emoji: '🍜', subs: ['Breakfast', 'Lunch', 'Dinner', 'Eating Out', 'Drinks', 'Groceries'] },
-        { id: 'home', name: 'Home', emoji: '🏠', subs: ['Rent', 'Utilities', 'Internet', 'Maintenance', 'Furniture'] },
+        { id: 'home', name: 'Household', emoji: '🏠', subs: ['Rent', 'Utilities', 'Maintenance', 'Furniture'] },
+        { id: 'loan', name: 'Loans', emoji: '🏦', subs: ['House Loan', 'Car Loan'] },
+        { id: 'bills', name: 'Bills', emoji: '📋', subs: ['Internet Bill', 'Phone Bill', 'Electric Bill', 'Water Bill'] },
         { id: 'tpt', name: 'Transport', emoji: '🚗', subs: ['Petrol', 'Toll', 'Parking', 'Grab', 'Public Transport'] },
-        { id: 'hlth', name: 'Healthcare', emoji: '🏥', subs: ['Doctor', 'Medicine', 'Dental', 'Gym'] },
+        { id: 'hlth', name: 'Health', emoji: '🏥', subs: ['Doctor', 'Medicine', 'Dental', 'Gym'] },
         { id: 'shop', name: 'Shopping', emoji: '🛍️', subs: ['Clothing', 'Electronics', 'Personal Care', 'Online'] },
         { id: 'sport', name: 'Sports', emoji: '🏸', subs: ['Equipment', 'Court Fees', 'Membership'] },
+        { id: 'hol', name: 'Holiday', emoji: '✈️', subs: ['Flights', 'Hotel', 'Activities', 'Travel Insurance'] },
         { id: 'edu', name: 'Education', emoji: '📚', subs: ['Courses', 'Books', 'Subscriptions'] },
         { id: 'ent', name: 'Entertainment', emoji: '🎬', subs: ['Movies', 'Events', 'Streaming', 'Dining Out'] },
         { id: 'oth_e', name: 'Others', emoji: '📤', subs: ['Miscellaneous'] },
@@ -932,8 +939,35 @@ let data = (() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      // migrate if needed
       if (!parsed.recurringDismissed) parsed.recurringDismissed = [];
+      if (!parsed.budgets) parsed.budgets = [];
+
+      // ── MIGRATE: rename Home→Household, Healthcare→Health ──
+      const expCats = parsed.categories?.expense || [];
+      const homeCat = expCats.find(c => c.id === 'home');
+      if (homeCat && homeCat.name === 'Home') homeCat.name = 'Household';
+      const hlthCat = expCats.find(c => c.id === 'hlth');
+      if (hlthCat && hlthCat.name === 'Healthcare') hlthCat.name = 'Health';
+
+      // ── MIGRATE: add missing expense categories ──
+      const dd = defaultData();
+      const newCatIds = ['loan','bills','hol'];
+      newCatIds.forEach(id => {
+        if (!expCats.find(c => c.id === id)) {
+          const newCat = dd.categories.expense.find(c => c.id === id);
+          if (newCat) expCats.splice(-1, 0, newCat); // insert before Others
+        }
+      });
+
+      // ── MIGRATE: add missing currencies ──
+      const newCurrencies = ['TWD','JPY','CNY','HKD'];
+      newCurrencies.forEach(code => {
+        if (!parsed.currencies.find(c => c.code === code)) {
+          const nc = dd.currencies.find(c => c.code === code);
+          if (nc) parsed.currencies.push(nc);
+        }
+      });
+
       return parsed;
     }
   } catch(e) {}
@@ -1168,7 +1202,7 @@ function setFilter(f, el) {
 
 function openAddTransaction() {
   editingTxId = null;
-  currentTxType = 'income';
+  currentTxType = 'expense';
   currentTxContext = 'personal';
   document.getElementById('txModalTitle').textContent = 'New Entry';
   document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
@@ -1181,7 +1215,7 @@ function openAddTransaction() {
   document.getElementById('moreToggleIcon').textContent = '▸';
   document.getElementById('saveTxBtn').textContent = 'Save Entry';
   document.getElementById('deleteTxBtn').style.display = 'none';
-  setTxTypeSilent('income');
+  setTxTypeSilent('expense');
   setContextSilent('personal');
   populateCategorySelect();
   populateCurrencySelect();
@@ -2332,9 +2366,49 @@ function setDefaultCurrency(code) {
 }
 
 // ── CATEGORY MANAGER ──
+// ── EMOJI PICKER ──
+const EXPENSE_EMOJIS = [
+  '🍜','🍔','☕','🛒','🏠','🏦','📋','🚗','🚌','✈️',
+  '🏥','💊','🏋️','🏸','🛍️','👗','💻','📱','🎬','🎮',
+  '📚','🎓','💡','🌴','🏖️','🎁','🤝','💈','🧴','🧹',
+  '⚡','💧','📡','🔧','🏗️','🌐','📌','📤','💸','🎯'
+];
+const INCOME_EMOJIS = [
+  '💰','💵','🧾','💻','📈','🏆','🎁','📥','🤝','💼',
+  '🏦','💎','🌟','📊','🔑','🎯','📌','💡','🌱','✨'
+];
+
+function renderEmojiPicker(type) {
+  const emojis = type === 'income' ? INCOME_EMOJIS : EXPENSE_EMOJIS;
+  const current = document.getElementById('newCatEmoji').value || emojis[0];
+  document.getElementById('emojiPicker').innerHTML = emojis.map(e =>
+    `<button type="button" onclick="selectEmoji('${e}')" style="
+      width:36px;height:36px;font-size:20px;border-radius:8px;border:2px solid ${e===current?'var(--ink)':'transparent'};
+      background:${e===current?'var(--paper-dark)':'none'};cursor:pointer;transition:all 0.1s;display:flex;align-items:center;justify-content:center;
+      padding:0;" id="ep_${e.codePointAt(0)}">${e}</button>`
+  ).join('');
+}
+
+function selectEmoji(e) {
+  document.getElementById('newCatEmoji').value = e;
+  // Update picker highlight
+  document.querySelectorAll('#emojiPicker button').forEach(btn => {
+    btn.style.borderColor = 'transparent';
+    btn.style.background = 'none';
+  });
+  const id = 'ep_' + e.codePointAt(0);
+  const btn = document.getElementById(id);
+  if (btn) { btn.style.borderColor = 'var(--ink)'; btn.style.background = 'var(--paper-dark)'; }
+}
+
 function openCatModal(type) {
   managingCatType = type;
   document.getElementById('catModalTitle').textContent = (type === 'income' ? 'Income' : 'Expense') + ' Categories';
+  // Reset new cat form
+  document.getElementById('newCatName').value = '';
+  const defaultEmoji = type === 'income' ? '💰' : '📌';
+  document.getElementById('newCatEmoji').value = defaultEmoji;
+  renderEmojiPicker(type);
   renderCatList();
   openModal('catModal');
 }
