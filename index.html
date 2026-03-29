@@ -9,12 +9,15 @@
 <title>Kira — Personal Finance</title>
 <link rel="manifest" href="#" id="manifest-link">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
+/* ══ THEME: WASHI (default) ══ */
 :root {
   --paper: #f5f0e8;
   --paper-dark: #ede8de;
   --paper-darker: #e0dace;
+  --card-bg: #ffffff;
   --ink: #2c2820;
   --ink-light: #6b6358;
   --ink-lighter: #9e9488;
@@ -34,9 +37,63 @@
   --shadow-lg: 0 8px 32px rgba(44,40,32,0.14);
   --radius: 12px;
   --radius-sm: 8px;
-  --font-display: 'Cormorant Garamond', serif;
+  --font-display: 'Playfair Display', serif;
   --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
   --nav-height: 64px;
+  --overlay-bg: rgba(44,40,32,0.5);
+}
+
+/* ══ THEME: FOREST INK (dark) ══ */
+[data-theme="forest"] {
+  --paper: #1a2e1e;
+  --paper-dark: #223828;
+  --paper-darker: #2d4a34;
+  --card-bg: #223828;
+  --ink: #e8dfc8;
+  --ink-light: #b8a888;
+  --ink-lighter: #7a8c74;
+  --sage: #c8b86a;
+  --sage-light: #d4c880;
+  --sage-pale: #2d3e1e;
+  --stone: #8fa882;
+  --stone-light: #6a9460;
+  --warm-red: #e07c5a;
+  --warm-red-pale: #3a2018;
+  --warm-green: #8fc880;
+  --warm-green-pale: #1e3a1a;
+  --warm-amber: #c8b86a;
+  --warm-amber-pale: #2a2a10;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+  --overlay-bg: rgba(0,0,0,0.7);
+}
+
+/* ══ THEME: CHALK (editorial) ══ */
+[data-theme="chalk"] {
+  --paper: #ffffff;
+  --paper-dark: #f4f4f4;
+  --paper-darker: #e8e8e8;
+  --card-bg: #ffffff;
+  --ink: #0a0a0a;
+  --ink-light: #444444;
+  --ink-lighter: #888888;
+  --sage: #e6a817;
+  --sage-light: #f0c050;
+  --sage-pale: #fdf6e0;
+  --stone: #666666;
+  --stone-light: #999999;
+  --warm-red: #cc3322;
+  --warm-red-pale: #fff0ee;
+  --warm-green: #1a7a3a;
+  --warm-green-pale: #eaf5ee;
+  --warm-amber: #e6a817;
+  --warm-amber-pale: #fdf6e0;
+  --shadow-sm: 0 1px 0px rgba(0,0,0,0.12);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 4px 20px rgba(0,0,0,0.10);
+  --overlay-bg: rgba(0,0,0,0.5);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -103,7 +160,7 @@ html, body {
 
 /* ── CARDS ── */
 .card {
-  background: white; border-radius: var(--radius);
+  background: var(--card-bg); border-radius: var(--radius);
   padding: 16px; box-shadow: var(--shadow-sm);
   border: 1px solid var(--paper-darker);
 }
@@ -123,12 +180,13 @@ html, body {
   gap: 8px; padding: 8px 20px 12px;
 }
 .summary-box {
-  background: white; border-radius: var(--radius-sm);
+  background: var(--card-bg); border-radius: var(--radius-sm);
   padding: 12px 10px; text-align: center;
   border: 1px solid var(--paper-darker);
 }
 .summary-box .label { font-size: 10px; color: var(--ink-lighter); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-.summary-box .value { font-family: var(--font-display); font-size: 17px; font-weight: 500; }
+.summary-box .sublabel { font-size: 9px; color: var(--ink-lighter); letter-spacing: 0.04em; margin-bottom: 2px; text-transform: uppercase; }
+.summary-box .value { font-family: var(--font-mono); font-size: 16px; font-weight: 500; letter-spacing: -0.02em; }
 .summary-box.income .value { color: var(--warm-green); }
 .summary-box.expense .value { color: var(--warm-red); }
 .summary-box.net .value { color: var(--ink); }
@@ -138,7 +196,7 @@ html, body {
 .filter-bar::-webkit-scrollbar { display: none; }
 .filter-chip {
   flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
-  border: 1px solid var(--paper-darker); background: white;
+  border: 1px solid var(--paper-darker); background: var(--card-bg);
   font-size: 12px; cursor: pointer; white-space: nowrap;
   color: var(--ink-light); transition: all 0.15s;
   font-family: var(--font-body);
@@ -150,13 +208,13 @@ html, body {
 .tx-date-label { font-size: 11px; color: var(--ink-lighter); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; font-weight: 500; }
 
 .tx-item {
-  background: white; border-radius: var(--radius-sm);
+  background: var(--card-bg); border-radius: var(--radius-sm);
   padding: 12px 14px; margin-bottom: 6px;
   border: 1px solid var(--paper-darker);
   display: flex; align-items: center; gap: 12px;
   cursor: pointer; transition: background 0.15s;
 }
-.tx-item:active { background: var(--paper); }
+.tx-item:active { background: var(--paper-dark); }
 .tx-icon {
   width: 36px; height: 36px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
@@ -168,7 +226,7 @@ html, body {
 .tx-title { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tx-sub { font-size: 11px; color: var(--ink-lighter); margin-top: 2px; }
 .tx-right { text-align: right; flex-shrink: 0; }
-.tx-amount { font-family: var(--font-display); font-size: 16px; font-weight: 500; }
+.tx-amount { font-family: var(--font-mono); font-size: 15px; font-weight: 500; letter-spacing: -0.02em; }
 .tx-amount.income { color: var(--warm-green); }
 .tx-amount.expense { color: var(--warm-red); }
 .tx-amount.expense::before { content: '−'; }
@@ -181,7 +239,7 @@ html, body {
 
 /* ── MODAL ── */
 .modal-overlay {
-  position: fixed; inset: 0; background: rgba(44,40,32,0.5);
+  position: fixed; inset: 0; background: var(--overlay-bg);
   z-index: 200; display: none; align-items: flex-end;
   backdrop-filter: blur(2px);
 }
@@ -204,7 +262,7 @@ html, body {
 .form-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-lighter); margin-bottom: 6px; display: block; font-weight: 500; }
 .form-input, .form-select, .form-textarea {
   width: 100%; padding: 11px 14px;
-  background: white; border: 1px solid var(--paper-darker);
+  background: var(--card-bg); border: 1px solid var(--paper-darker);
   border-radius: var(--radius-sm); font-size: 14px; color: var(--ink);
   font-family: var(--font-body); appearance: none;
   transition: border-color 0.15s;
@@ -219,7 +277,7 @@ html, body {
 .toggle-row { display: flex; gap: 8px; }
 .toggle-btn {
   flex: 1; padding: 10px; border-radius: var(--radius-sm);
-  border: 1px solid var(--paper-darker); background: white;
+  border: 1px solid var(--paper-darker); background: var(--card-bg);
   font-size: 13px; cursor: pointer; font-family: var(--font-body);
   color: var(--ink-light); transition: all 0.15s; text-align: center;
 }
@@ -241,12 +299,12 @@ html, body {
 }
 .btn-primary:active { opacity: 0.85; }
 .btn-secondary {
-  width: 100%; padding: 12px; background: white; color: var(--ink);
+  width: 100%; padding: 12px; background: var(--card-bg); color: var(--ink);
   border: 1px solid var(--paper-darker); border-radius: var(--radius-sm);
   font-size: 14px; font-family: var(--font-body); cursor: pointer;
   margin-top: 8px; transition: background 0.15s;
 }
-.btn-secondary:active { background: var(--paper); }
+.btn-secondary:active { background: var(--paper-dark); }
 .btn-danger {
   padding: 8px 16px; background: var(--warm-red-pale); color: var(--warm-red);
   border: 1px solid var(--warm-red); border-radius: var(--radius-sm);
@@ -258,7 +316,7 @@ html, body {
 .analytics-tabs::-webkit-scrollbar { display: none; }
 .atab {
   flex-shrink: 0; padding: 7px 16px; font-size: 12px;
-  border: 1px solid var(--paper-darker); background: white;
+  border: 1px solid var(--paper-darker); background: var(--card-bg);
   cursor: pointer; font-family: var(--font-body); color: var(--ink-light);
   letter-spacing: 0.03em; white-space: nowrap;
   transition: all 0.15s;
@@ -294,7 +352,7 @@ html, body {
 .bar-fill.expense { background: var(--warm-red); }
 .bar-fill.personal { background: var(--sage); }
 .bar-fill.work { background: var(--warm-amber); }
-.bar-value { font-size: 11px; color: var(--ink-lighter); width: 70px; text-align: right; flex-shrink: 0; font-family: var(--font-display); }
+.bar-value { font-size: 11px; color: var(--ink-lighter); width: 70px; text-align: right; flex-shrink: 0; font-family: var(--font-mono); }
 
 /* Trend Chart */
 .trend-canvas-wrap { padding: 0 20px 20px; }
@@ -306,7 +364,7 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
 
 /* Claims panel */
 .claim-row {
-  background: white; border: 1px solid var(--paper-darker);
+  background: var(--card-bg); border: 1px solid var(--paper-darker);
   border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px;
 }
 .claim-row-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
@@ -315,38 +373,64 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
 .claim-progress { height: 6px; background: var(--paper-darker); border-radius: 3px; overflow: hidden; margin-top: 8px; }
 .claim-progress-fill { height: 100%; border-radius: 3px; }
 
-/* ── BUDGETS PAGE ── */
-.budget-item {
-  background: white; border-radius: var(--radius-sm); padding: 14px;
-  border: 1px solid var(--paper-darker); margin-bottom: 8px;
+/* ── CHARTS PAGE ── */
+.chart-block { padding: 0 20px 24px; }
+.chart-title { font-family: var(--font-display); font-size: 17px; font-weight: 500; margin-bottom: 4px; color: var(--ink); }
+.chart-subtitle { font-size: 11px; color: var(--ink-lighter); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.05em; }
+.chart-card { background: var(--card-bg); border: 1px solid var(--paper-darker); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
+
+/* Savings Rate */
+.savings-rate-big { font-family: var(--font-mono); font-size: 52px; font-weight: 500; letter-spacing: -0.04em; line-height: 1; }
+.savings-rate-big.positive { color: var(--warm-green); }
+.savings-rate-big.negative { color: var(--warm-red); }
+.sparkline-wrap { margin-top: 12px; }
+
+/* Heatmap */
+.heatmap-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 8px; }
+.heatmap-cell {
+  aspect-ratio: 1; border-radius: 4px; background: var(--paper-darker);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; color: var(--ink-lighter); cursor: default;
+  transition: transform 0.1s;
 }
-.budget-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.budget-item-name { font-size: 13px; font-weight: 500; }
-.budget-item-amounts { font-size: 12px; color: var(--ink-light); }
-.budget-bar { height: 6px; background: var(--paper-darker); border-radius: 3px; overflow: hidden; }
-.budget-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
-.budget-bar-fill.safe { background: var(--warm-green); }
-.budget-bar-fill.warning { background: var(--warm-amber); }
-.budget-bar-fill.over { background: var(--warm-red); }
-.budget-pct { font-size: 11px; color: var(--ink-lighter); margin-top: 4px; text-align: right; }
+.heatmap-cell.has-data:active { transform: scale(0.9); }
+.heatmap-day-labels { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px; }
+.heatmap-day-label { font-size: 9px; color: var(--ink-lighter); text-align: center; text-transform: uppercase; letter-spacing: 0.04em; }
+.heatmap-legend { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 10px; color: var(--ink-lighter); }
+.heatmap-legend-track { flex: 1; height: 6px; border-radius: 3px; background: linear-gradient(to right, var(--paper-darker), var(--warm-red)); }
+
+/* Top subcategories */
+.ranked-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.ranked-num { font-family: var(--font-mono); font-size: 11px; color: var(--ink-lighter); width: 16px; flex-shrink: 0; }
+.ranked-label { font-size: 12px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ranked-bar-wrap { width: 80px; height: 6px; background: var(--paper-darker); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+.ranked-bar-fill { height: 100%; border-radius: 3px; background: var(--warm-red); transition: width 0.5s; }
+.ranked-amount { font-family: var(--font-mono); font-size: 12px; color: var(--ink); width: 68px; text-align: right; flex-shrink: 0; }
+
+/* Day-of-week bars */
+.dow-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: flex-end; height: 100px; margin-bottom: 6px; }
+.dow-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+.dow-bar { width: 100%; border-radius: 4px 4px 0 0; background: var(--warm-red); transition: height 0.5s; min-height: 3px; }
+.dow-label { font-size: 9px; color: var(--ink-lighter); text-transform: uppercase; letter-spacing: 0.03em; }
+.dow-amount { font-family: var(--font-mono); font-size: 9px; color: var(--ink-lighter); }
 
 /* ── SETTINGS PAGE ── */
 .settings-section { padding: 0 20px 16px; }
 .settings-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-lighter); font-weight: 500; margin-bottom: 8px; padding-top: 16px; }
 .settings-item {
-  background: white; border: 1px solid var(--paper-darker);
+  background: var(--card-bg); border: 1px solid var(--paper-darker);
   border-radius: var(--radius-sm); padding: 13px 14px;
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 6px; cursor: pointer;
 }
-.settings-item:active { background: var(--paper); }
+.settings-item:active { background: var(--paper-dark); }
 .settings-item-label { font-size: 13px; }
 .settings-item-value { font-size: 12px; color: var(--ink-lighter); }
 .settings-item-arrow { color: var(--ink-lighter); font-size: 14px; }
 
 /* Category manager */
 .cat-item {
-  background: white; border: 1px solid var(--paper-darker); border-radius: var(--radius-sm);
+  background: var(--card-bg); border: 1px solid var(--paper-darker); border-radius: var(--radius-sm);
   padding: 10px 14px; margin-bottom: 6px;
   display: flex; align-items: center; justify-content: space-between;
 }
@@ -366,19 +450,19 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
 .recurring-suggestion p { font-size: 12px; color: var(--ink-light); margin-bottom: 12px; }
 .recurring-list { display: flex; flex-direction: column; gap: 6px; }
 .recurring-item {
-  background: white; border-radius: var(--radius-sm); padding: 10px 12px;
+  background: var(--card-bg); border-radius: var(--radius-sm); padding: 10px 12px;
   display: flex; align-items: center; justify-content: space-between;
   border: 1px solid rgba(196,137,58,0.2);
 }
 .recurring-item-info { font-size: 13px; }
-.recurring-item-amount { font-family: var(--font-display); font-size: 15px; }
+.recurring-item-amount { font-family: var(--font-mono); font-size: 15px; }
 .recurring-item-btns { display: flex; gap: 6px; }
 .btn-xs {
   padding: 5px 12px; font-size: 11px; border-radius: 6px;
   border: 1px solid; cursor: pointer; font-family: var(--font-body);
 }
 .btn-xs.confirm { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.btn-xs.skip { background: white; color: var(--ink-light); border-color: var(--paper-darker); }
+.btn-xs.skip { background: var(--card-bg); color: var(--ink-light); border-color: var(--paper-darker); }
 
 /* Empty state */
 .empty-state { text-align: center; padding: 60px 20px; }
@@ -404,7 +488,7 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
 .col-mapper { background: var(--paper-dark); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 12px; }
 .col-mapper-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .col-mapper-field { font-size: 12px; font-weight: 500; width: 90px; flex-shrink: 0; }
-.col-mapper-select { flex: 1; padding: 7px 10px; border: 1px solid var(--paper-darker); border-radius: 6px; font-size: 12px; background: white; font-family: var(--font-body); }
+.col-mapper-select { flex: 1; padding: 7px 10px; border: 1px solid var(--paper-darker); border-radius: 6px; font-size: 12px; background: var(--card-bg); font-family: var(--font-body); }
 
 /* Toast */
 .toast {
@@ -468,15 +552,15 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
 
     <div class="summary-strip">
       <div class="summary-box income">
-        <div class="label">Income</div>
+        <div class="label" id="summaryIncomeLabel">Income</div>
         <div class="value" id="summaryIncome">0</div>
       </div>
       <div class="summary-box expense">
-        <div class="label">Expenses</div>
+        <div class="label" id="summaryExpenseLabel">Expenses</div>
         <div class="value" id="summaryExpense">0</div>
       </div>
       <div class="summary-box net">
-        <div class="label">Net</div>
+        <div class="label" id="summaryNetLabel">Net</div>
         <div class="value" id="summaryNet">0</div>
       </div>
     </div>
@@ -519,12 +603,25 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
     <div id="analyticsContent"></div>
   </div>
 
-  <!-- ════════════════════════════════ BUDGETS PAGE ════════════════════════════════ -->
-  <div id="page-budgets" class="page">
+  <!-- ════════════════════════════════ CHARTS PAGE ════════════════════════════════ -->
+  <div id="page-charts" class="page">
     <div class="top-header">
-      <h1>Budgets</h1>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <h1>Charts</h1>
+          <div class="subtitle" id="chartsMonthLabel"></div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="changeChartsMonth(-1)" style="background:none;border:1px solid var(--paper-darker);border-radius:6px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <button onclick="changeChartsMonth(1)" style="background:none;border:1px solid var(--paper-darker);border-radius:6px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+      </div>
     </div>
-    <div id="budgetsList" style="padding:0 20px;"></div>
+    <div id="chartsContent"></div>
   </div>
 
   <!-- ════════════════════════════════ SETTINGS PAGE ════════════════════════════════ -->
@@ -545,9 +642,9 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
       Analytics
     </button>
-    <button class="nav-item" onclick="switchPage('budgets',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-      Budgets
+    <button class="nav-item" onclick="switchPage('charts',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      Charts
     </button>
     <button class="nav-item" onclick="switchPage('settings',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41M20 12h-2M6 12H4M12 20v-2M12 6V4"/></svg>
@@ -655,34 +752,6 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
   </div>
 </div>
 
-<!-- Budget Set Modal -->
-<div class="modal-overlay" id="budgetModal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h2 id="budgetModalTitle">Set Budget</h2>
-      <button class="modal-close" onclick="closeModal('budgetModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">Monthly Limit</label>
-        <input type="number" class="form-input" id="budgetAmount" placeholder="0.00" min="0">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Apply to</label>
-        <div class="toggle-row">
-          <button class="toggle-btn active personal" onclick="setBudgetCtx('all',this)">All</button>
-          <button class="toggle-btn personal" onclick="setBudgetCtx('personal',this)">Personal</button>
-          <button class="toggle-btn work" onclick="setBudgetCtx('work',this)">Work</button>
-        </div>
-      </div>
-      <input type="hidden" id="budgetTarget">
-      <input type="hidden" id="budgetTargetType">
-      <button class="btn-primary" onclick="saveBudget()">Save Budget</button>
-    </div>
-  </div>
-</div>
-
 <!-- Currency Manager Modal -->
 <div class="modal-overlay" id="currencyModal">
   <div class="modal">
@@ -774,20 +843,20 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
         <div style="background:var(--paper-dark);border-radius:var(--radius-sm);padding:14px;margin-bottom:16px;">
           <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-lighter);margin-bottom:8px;font-weight:500;">Expected CSV columns</div>
           <div style="font-size:12px;color:var(--ink-light);line-height:1.8;">
-            <code style="font-size:11px;background:white;padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">Date</code> &nbsp;
-            <code style="font-size:11px;background:white;padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">Account</code> &nbsp;
-            <code style="font-size:11px;background:white;padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">Category</code> &nbsp;
-            <code style="font-size:11px;background:white;padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">Subcategory</code> &nbsp;
-            <code style="font-size:11px;background:white;padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">Note</code> &nbsp;
-            <code style="font-size:11px;background:white;padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">MYR</code> &nbsp;
-            <code style="font-size:11px;background:white;padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">Income/Expense</code> &nbsp;
-            <code style="font-size:11px;background:white;padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">Amount</code> &nbsp;
-            <code style="font-size:11px;background:white;padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">Currency</code>
+            <code style="font-size:11px;background:var(--card-bg);padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">Date</code> &nbsp;
+            <code style="font-size:11px;background:var(--card-bg);padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">Account</code> &nbsp;
+            <code style="font-size:11px;background:var(--card-bg);padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">Category</code> &nbsp;
+            <code style="font-size:11px;background:var(--card-bg);padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">Subcategory</code> &nbsp;
+            <code style="font-size:11px;background:var(--card-bg);padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">Note</code> &nbsp;
+            <code style="font-size:11px;background:var(--card-bg);padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">MYR</code> &nbsp;
+            <code style="font-size:11px;background:var(--card-bg);padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">Income/Expense</code> &nbsp;
+            <code style="font-size:11px;background:var(--card-bg);padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">Amount</code> &nbsp;
+            <code style="font-size:11px;background:var(--card-bg);padding:2px 5px;border-radius:4px;border:1px solid var(--paper-darker);">Currency</code>
           </div>
           <div style="font-size:11px;color:var(--ink-lighter);margin-top:8px;">Use Kira's Export CSV as a template. <em>Account</em> = Cash (Personal) or Work.</div>
         </div>
-        <input type="file" id="csvFileInput" accept=".csv,.xlsx" onchange="handleCSVUpload(event)" style="display:none;">
-        <button class="btn-primary" onclick="document.getElementById('csvFileInput').click()">Choose CSV File</button>
+        <input type="file" id="csvFileInput" accept=".csv,.xls,.xlsx" onchange="handleCSVUpload(event)" style="display:none;">
+        <button class="btn-primary" onclick="document.getElementById('csvFileInput').click()">Choose File (CSV, XLS, XLSX)</button>
       </div>
       <div id="importStep2" style="display:none;">
         <div id="importPreviewTable" style="margin-bottom:16px;"></div>
@@ -879,13 +948,13 @@ function save() {
 // STATE
 // ════════════════════════════════════════════════════════════
 
-let currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+let currentMonth = new Date().toISOString().slice(0, 7);
 let analyticsMonth = currentMonth;
+let chartsMonth = currentMonth;
 let txFilter = 'all';
 let editingTxId = null;
 let currentTxType = 'income';
 let currentTxContext = 'personal';
-let budgetCtx = 'all';
 let managingCatType = 'income';
 let managingCatId = null;
 let csvData = null;
@@ -897,6 +966,13 @@ let currentAnalyticsTab = 'summary';
 // ════════════════════════════════════════════════════════════
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+function fmtNum(amount) {
+  // Compact display for summary cards — strip currency code, keep 2 decimals
+  if (amount >= 100000) return (amount/1000).toFixed(0) + 'k';
+  if (amount >= 10000) return (amount/1000).toFixed(1) + 'k';
+  return amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
 
 function fmt(amount, currency) {
   const c = currency || data.settings.defaultCurrency;
@@ -964,7 +1040,7 @@ function switchPage(name, btn) {
   btn.classList.add('active');
   document.getElementById('mainFab').style.display = name === 'transactions' ? 'flex' : 'none';
   if (name === 'analytics') renderAnalytics();
-  if (name === 'budgets') renderBudgets();
+  if (name === 'charts') renderCharts();
   if (name === 'settings') renderSettings();
 }
 
@@ -994,12 +1070,37 @@ function renderTransactions() {
   document.getElementById('currentMonthLabel').textContent = monthLabel(currentMonth);
   document.getElementById('headerCurrency').textContent = data.settings.defaultCurrency;
 
-  const s = monthSummary(currentMonth);
-  document.getElementById('summaryIncome').textContent = fmtDef(s.income).replace(/[A-Z]+\s?/, '');
-  document.getElementById('summaryExpense').textContent = fmtDef(s.expense).replace(/[A-Z]+\s?/, '');
+  // Filter-aware summary cards
+  const allTxs = getMonthTxs(currentMonth);
+  let filteredForSummary = allTxs;
+  let incomeLabel = 'Income', expenseLabel = 'Expenses', netLabel = 'Net';
+
+  if (txFilter === 'income') {
+    filteredForSummary = allTxs.filter(t => t.type === 'income');
+    incomeLabel = 'Income'; expenseLabel = '—'; netLabel = 'Total';
+  } else if (txFilter === 'expense') {
+    filteredForSummary = allTxs.filter(t => t.type === 'expense');
+    incomeLabel = '—'; expenseLabel = 'Expenses'; netLabel = 'Total';
+  } else if (txFilter === 'personal') {
+    filteredForSummary = allTxs.filter(t => t.context === 'personal');
+    incomeLabel = 'P. Income'; expenseLabel = 'P. Expense'; netLabel = 'P. Net';
+  } else if (txFilter === 'work') {
+    filteredForSummary = allTxs.filter(t => t.context === 'work');
+    incomeLabel = 'W. Income'; expenseLabel = 'W. Expense'; netLabel = 'W. Net';
+  }
+
+  const inc = filteredForSummary.filter(t => t.type === 'income').reduce((s,t) => s + t.convertedAmount, 0);
+  const exp = filteredForSummary.filter(t => t.type === 'expense').reduce((s,t) => s + t.convertedAmount, 0);
+  const net = inc - exp;
+
+  document.getElementById('summaryIncomeLabel').textContent = incomeLabel;
+  document.getElementById('summaryExpenseLabel').textContent = expenseLabel;
+  document.getElementById('summaryNetLabel').textContent = netLabel;
+  document.getElementById('summaryIncome').textContent = fmtNum(inc);
+  document.getElementById('summaryExpense').textContent = fmtNum(exp);
   const netEl = document.getElementById('summaryNet');
-  netEl.textContent = fmtDef(Math.abs(s.net)).replace(/[A-Z]+\s?/, '');
-  netEl.className = 'value ' + (s.net >= 0 ? 'net-positive' : 'net-negative');
+  netEl.textContent = fmtNum(Math.abs(net));
+  netEl.className = 'value ' + (net >= 0 ? 'net-positive' : 'net-negative');
 
   const txs = getFilteredTxs(currentMonth);
   const list = document.getElementById('txList');
@@ -1424,22 +1525,7 @@ function buildInsightCards(ym) {
     }
   });
 
-  // Budget exceeded
-  const exceeded = data.budgets.filter(b => {
-    const spent = getMonthSpend(ym, b.target, b.targetType, b.context);
-    return spent > b.limit;
-  });
-  if (exceeded.length) cards.push({ type: 'negative', icon: '🎯', text: `<strong>${exceeded.length} budget${exceeded.length > 1 ? 's' : ''}</strong> exceeded this month` });
-
   return cards.slice(0, 5);
-}
-
-function getMonthSpend(ym, target, targetType, ctx) {
-  return getMonthTxs(ym)
-    .filter(t => t.type === 'expense' &&
-      (targetType === 'category' ? t.categoryId === target : t.subcategory === target) &&
-      (ctx === 'all' ? true : t.context === ctx))
-    .reduce((s, t) => s + t.convertedAmount, 0);
 }
 
 // ── SUMMARY TAB ──
@@ -1463,17 +1549,17 @@ function renderSummaryTab() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
         <div class="card">
           <div style="font-size:11px;color:var(--ink-lighter);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Total Income</div>
-          <div style="font-family:var(--font-display);font-size:22px;color:var(--warm-green);">${fmtDef(s.income)}</div>
+          <div style="font-family:var(--font-mono);font-size:20px;color:var(--warm-green);">${fmtDef(s.income)}</div>
         </div>
         <div class="card">
           <div style="font-size:11px;color:var(--ink-lighter);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Total Expenses</div>
-          <div style="font-family:var(--font-display);font-size:22px;color:var(--warm-red);">${fmtDef(s.expense)}</div>
+          <div style="font-family:var(--font-mono);font-size:20px;color:var(--warm-red);">${fmtDef(s.expense)}</div>
         </div>
       </div>
       <div class="card" style="margin-bottom:20px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div style="font-size:12px;color:var(--ink-light);">Net</div>
-          <div style="font-family:var(--font-display);font-size:24px;font-weight:500;" class="${s.net >= 0 ? 'net-positive' : 'net-negative'}">${fmtDef(s.net)}</div>
+          <div style="font-family:var(--font-mono);font-size:22px;font-weight:500;" class="${s.net >= 0 ? 'net-positive' : 'net-negative'}">${fmtDef(s.net)}</div>
         </div>
       </div>
       <div class="section-title">By Context</div>
@@ -1553,7 +1639,7 @@ function drawBalanceChart() {
   ctx.stroke();
 
   // Dots + labels
-  ctx.font = '11px DM Sans, sans-serif';
+  ctx.font = '11px DM Mono, monospace';
   balances.forEach((v, i) => {
     const x = pad.l + i * xStep, y = yScale(v);
     ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
@@ -1594,7 +1680,7 @@ function renderCategoriesTab() {
       return `<div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
           <div style="font-size:13px;font-weight:500;">${cat.emoji} ${cat.name}</div>
-          <div style="font-family:var(--font-display);font-size:16px;">${fmtDef(v.total)}</div>
+          <div style="font-family:var(--font-mono);font-size:15px;">${fmtDef(v.total)}</div>
         </div>
         <div class="bar-track" style="height:10px;margin-bottom:8px;"><div class="bar-fill expense" style="width:${pct}%"></div></div>
         <div style="display:flex;gap:12px;font-size:11px;color:var(--ink-lighter);margin-bottom:8px;">
@@ -1633,7 +1719,7 @@ function drawSankeyDiagram() {
 
   const txs = getMonthTxs(analyticsMonth);
   if (!txs.length) {
-    ctx.font = '14px DM Sans'; ctx.fillStyle = '#9e9488'; ctx.textAlign = 'center';
+    ctx.font = '13px DM Sans, sans-serif'; ctx.fillStyle = '#9e9488'; ctx.textAlign = 'center';
     ctx.fillText('No data for this month', W/2, H/2); return;
   }
 
@@ -1646,7 +1732,7 @@ function drawSankeyDiagram() {
   const col1W = W * 0.18, col2W = W * 0.16, col3W = W * 0.20;
   const barPad = 4;
 
-  ctx.font = '11px DM Sans, sans-serif';
+  ctx.font = '11px DM Mono, monospace';
 
   // ── Col1: Total Income / Total Expense
   const nodes1 = [
@@ -1804,73 +1890,307 @@ function renderClaimsTab() {
 // BUDGETS PAGE
 // ════════════════════════════════════════════════════════════
 
-function renderBudgets() {
-  const el = document.getElementById('budgetsList');
-  const ym = currentMonth;
+// ════════════════════════════════════════════════════════════
+// CHARTS PAGE
+// ════════════════════════════════════════════════════════════
 
-  // Build list of all categories + subcategories with budget targets
-  const allTargets = [];
-  data.categories.expense.forEach(cat => {
-    allTargets.push({ target: cat.id, targetType: 'category', name: cat.name, emoji: cat.emoji });
-    cat.subs.forEach(s => allTargets.push({ target: s, targetType: 'subcategory', name: s, emoji: '  ↳', parent: cat.name }));
+function changeChartsMonth(dir) {
+  const [y, m] = chartsMonth.split('-').map(Number);
+  const d = new Date(y, m - 1 + dir);
+  chartsMonth = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  renderCharts();
+}
+
+function renderCharts() {
+  document.getElementById('chartsMonthLabel').textContent = monthLabel(chartsMonth);
+  const el = document.getElementById('chartsContent');
+  el.innerHTML = `
+    <div id="chart-savings" class="chart-block"></div>
+    <div id="chart-heatmap" class="chart-block"></div>
+    <div id="chart-cattrend" class="chart-block"></div>
+    <div id="chart-topcat" class="chart-block"></div>
+    <div id="chart-dow" class="chart-block"></div>
+  `;
+  renderSavingsRate();
+  renderHeatmap();
+  renderCatTrend();
+  renderTopSubcategories();
+  renderDayOfWeek();
+}
+
+// ── 1. SAVINGS RATE ──
+function renderSavingsRate() {
+  const months = getLast6Months(chartsMonth);
+  const rates = months.map(ym => {
+    const s = monthSummary(ym);
+    return s.income > 0 ? (s.net / s.income * 100) : 0;
+  });
+  const cur = rates[rates.length - 1];
+  const prev = rates[rates.length - 2] || 0;
+  const trend = cur - prev;
+  const isPos = cur >= 0;
+
+  // Sparkline
+  const maxAbs = Math.max(...rates.map(Math.abs), 1);
+  const W = 260, H = 48;
+  const pts = rates.map((r, i) => {
+    const x = (i / (rates.length - 1)) * W;
+    const y = H / 2 - (r / maxAbs) * (H / 2 - 6);
+    return `${x},${y}`;
+  }).join(' ');
+
+  const sparkColor = isPos ? 'var(--warm-green)' : 'var(--warm-red)';
+
+  document.getElementById('chart-savings').innerHTML = `
+    <div class="chart-title">Savings Rate</div>
+    <div class="chart-subtitle">Net ÷ Income · 6-month view</div>
+    <div class="chart-card">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;">
+        <div>
+          <div class="savings-rate-big ${isPos ? 'positive' : 'negative'}">${cur.toFixed(1)}%</div>
+          <div style="font-size:12px;color:var(--ink-lighter);margin-top:6px;">
+            ${trend >= 0 ? '▲' : '▼'} ${Math.abs(trend).toFixed(1)}% vs last month
+          </div>
+        </div>
+        <div class="sparkline-wrap" style="flex:1;">
+          <svg width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+            <line x1="0" y1="${H/2}" x2="${W}" y2="${H/2}" stroke="var(--paper-darker)" stroke-width="1" stroke-dasharray="3,3"/>
+            <polyline points="${pts}" fill="none" stroke="${sparkColor}" stroke-width="2" stroke-linejoin="round"/>
+            ${rates.map((r, i) => {
+              const x = (i / (rates.length - 1)) * W;
+              const y = H / 2 - (r / maxAbs) * (H / 2 - 6);
+              return `<circle cx="${x}" cy="${y}" r="3" fill="${r >= 0 ? 'var(--warm-green)' : 'var(--warm-red)'}"/>`;
+            }).join('')}
+          </svg>
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--ink-lighter);font-family:var(--font-mono);">
+            ${months.map(ym => `<span>${new Date(ym+'-01').toLocaleString('en',{month:'short'})}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:14px;">
+        ${months.map((ym, i) => {
+          const r = rates[i];
+          return `<div style="text-align:center;">
+            <div style="font-family:var(--font-mono);font-size:11px;color:${r>=0?'var(--warm-green)':'var(--warm-red)'};">${r.toFixed(0)}%</div>
+            <div style="font-size:9px;color:var(--ink-lighter);">${new Date(ym+'-01').toLocaleString('en',{month:'short'})}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+// ── 2. SPENDING HEATMAP ──
+function renderHeatmap() {
+  const [y, m] = chartsMonth.split('-').map(Number);
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const firstDow = new Date(y, m - 1, 1).getDay(); // 0=Sun
+
+  // Sum expenses per day
+  const dayTotals = {};
+  getMonthTxs(chartsMonth).filter(t => t.type === 'expense').forEach(t => {
+    const d = parseInt(t.date.split('-')[2]);
+    dayTotals[d] = (dayTotals[d] || 0) + t.convertedAmount;
+  });
+  const maxDay = Math.max(...Object.values(dayTotals), 1);
+
+  const dayLabels = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  const cells = [];
+  // Leading empty cells
+  for (let i = 0; i < firstDow; i++) cells.push('<div></div>');
+  // Day cells
+  for (let d = 1; d <= daysInMonth; d++) {
+    const amt = dayTotals[d] || 0;
+    const intensity = amt / maxDay;
+    const alpha = amt > 0 ? (0.15 + intensity * 0.85).toFixed(2) : '0';
+    const today = new Date();
+    const isToday = today.getFullYear() === y && today.getMonth() + 1 === m && today.getDate() === d;
+    cells.push(`<div class="heatmap-cell ${amt > 0 ? 'has-data' : ''}"
+      style="background:rgba(192,103,74,${alpha});${isToday ? 'outline:2px solid var(--warm-amber);' : ''}"
+      title="${d} ${monthLabel(chartsMonth).split(' ')[0]}: ${amt > 0 ? fmtDef(amt) : 'no spend'}">
+      <span style="color:${intensity > 0.5 ? 'rgba(255,255,255,0.9)' : 'var(--ink-lighter)'};">${d}</span>
+    </div>`);
+  }
+
+  document.getElementById('chart-heatmap').innerHTML = `
+    <div class="chart-title">Spending Heatmap</div>
+    <div class="chart-subtitle">Daily expense intensity</div>
+    <div class="chart-card">
+      <div class="heatmap-day-labels">${dayLabels.map(l => `<div class="heatmap-day-label">${l}</div>`).join('')}</div>
+      <div class="heatmap-grid">${cells.join('')}</div>
+      <div class="heatmap-legend">
+        <span>Low</span>
+        <div class="heatmap-legend-track"></div>
+        <span>High</span>
+        <span style="margin-left:8px;font-family:var(--font-mono);">Peak: ${fmtDef(maxDay)}</span>
+      </div>
+    </div>`;
+}
+
+// ── 3. CATEGORY MONTH-TO-MONTH TREND ──
+function renderCatTrend() {
+  const months = getLast6Months(chartsMonth);
+  const cats = data.categories.expense.slice(0, 6); // top 6 cats
+  const catColors = ['var(--warm-red)','var(--warm-amber)','var(--sage)','var(--stone)','#7a6ea8','#4a8a9a'];
+
+  const series = cats.map((cat, ci) => {
+    const vals = months.map(ym =>
+      getMonthTxs(ym).filter(t => t.type === 'expense' && t.categoryId === cat.id)
+        .reduce((s, t) => s + t.convertedAmount, 0)
+    );
+    return { cat, vals, color: catColors[ci] };
+  }).filter(s => s.vals.some(v => v > 0));
+
+  if (!series.length) {
+    document.getElementById('chart-cattrend').innerHTML = `<div class="chart-title">Category Trends</div><div style="color:var(--ink-lighter);font-size:13px;padding:20px 0;">No expense data yet.</div>`;
+    return;
+  }
+
+  const allVals = series.flatMap(s => s.vals);
+  const maxVal = Math.max(...allVals, 1);
+  const W = 300, H = 140;
+  const padL = 10, padR = 10, padT = 10, padB = 20;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+  const xStep = chartW / (months.length - 1);
+
+  const lines = series.map(s => {
+    const pts = s.vals.map((v, i) => {
+      const x = padL + i * xStep;
+      const y = padT + chartH - (v / maxVal * chartH);
+      return `${x},${y}`;
+    }).join(' ');
+    const dots = s.vals.map((v, i) => {
+      const x = padL + i * xStep;
+      const y = padT + chartH - (v / maxVal * chartH);
+      return `<circle cx="${x}" cy="${y}" r="3" fill="${s.color}"/>`;
+    }).join('');
+    return `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="1.8" stroke-linejoin="round" opacity="0.9"/>${dots}`;
+  }).join('');
+
+  const xLabels = months.map((ym, i) => {
+    const x = padL + i * xStep;
+    return `<text x="${x}" y="${H - 4}" text-anchor="middle" font-size="9" fill="var(--ink-lighter)" font-family="DM Sans">${new Date(ym+'-01').toLocaleString('en',{month:'short'})}</text>`;
+  }).join('');
+
+  const legend = series.map(s =>
+    `<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-light);">
+      <div style="width:10px;height:10px;border-radius:2px;background:${s.color};flex-shrink:0;"></div>
+      <span>${s.cat.emoji} ${s.cat.name}</span>
+    </div>`
+  ).join('');
+
+  document.getElementById('chart-cattrend').innerHTML = `
+    <div class="chart-title">Category Trends</div>
+    <div class="chart-subtitle">Month-on-month · 6 months</div>
+    <div class="chart-card">
+      <svg width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="overflow:visible;">
+        <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+chartH}" stroke="var(--paper-darker)" stroke-width="1"/>
+        <line x1="${padL}" y1="${padT+chartH}" x2="${padL+chartW}" y2="${padT+chartH}" stroke="var(--paper-darker)" stroke-width="1"/>
+        ${lines}${xLabels}
+      </svg>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">${legend}</div>
+    </div>`;
+}
+
+// ── 4. TOP SUBCATEGORIES ──
+function renderTopSubcategories() {
+  const txs = getMonthTxs(chartsMonth).filter(t => t.type === 'expense');
+  const subTotals = {};
+  txs.forEach(t => {
+    if (!t.subcategory) return;
+    const key = t.subcategory;
+    if (!subTotals[key]) subTotals[key] = { amount: 0, cat: getCatById(t.categoryId) };
+    subTotals[key].amount += t.convertedAmount;
   });
 
-  const budgetMap = {};
-  data.budgets.forEach(b => { budgetMap[b.target + '_' + b.context] = b; });
+  // Also include category-level if no subcategory
+  txs.filter(t => !t.subcategory).forEach(t => {
+    const cat = getCatById(t.categoryId);
+    const key = cat ? cat.name : t.categoryId;
+    if (!subTotals[key]) subTotals[key] = { amount: 0, cat };
+    subTotals[key].amount += t.convertedAmount;
+  });
 
-  el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-    <div style="font-family:var(--font-display);font-size:20px;">${monthLabel(ym)}</div>
-    <div style="font-size:12px;color:var(--ink-lighter);">vs this month's spending</div>
-  </div>` + allTargets.map(t => {
-    const budget = data.budgets.find(b => b.target === t.target && b.targetType === t.targetType);
-    const spent = getMonthSpend(ym, t.target, t.targetType, 'all');
-    if (!budget && spent === 0 && t.targetType === 'subcategory') return '';
-    const limit = budget?.limit || 0;
-    const pct = limit > 0 ? Math.min(spent / limit * 100, 100) : 0;
-    const fillClass = pct >= 100 ? 'over' : pct >= 80 ? 'warning' : 'safe';
-    return `<div class="budget-item">
-      <div class="budget-item-header">
-        <div class="budget-item-name">${t.emoji} ${t.name}${t.parent ? ` <span style="font-size:11px;color:var(--ink-lighter);">(${t.parent})</span>` : ''}</div>
-        <button class="btn-xs" style="border-color:var(--paper-darker);color:var(--ink-light);background:white;" onclick="openBudgetModal('${t.target}','${t.targetType}','${escapeAttr(t.name)}')">
-          ${limit > 0 ? 'Edit' : '+ Set'}
-        </button>
-      </div>
-      ${limit > 0 ? `
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-light);margin-bottom:6px;">
-          <span>Spent: <strong>${fmtDef(spent)}</strong></span>
-          <span>Limit: <strong>${fmtDef(limit)}</strong></span>
-        </div>
-        <div class="budget-bar"><div class="budget-bar-fill ${fillClass}" style="width:${pct}%"></div></div>
-        <div class="budget-pct">${pct.toFixed(0)}%${pct >= 100 ? ' ⚠️ Over budget' : ''}</div>
-      ` : `<div style="font-size:12px;color:var(--ink-lighter);">${spent > 0 ? 'Spent: ' + fmtDef(spent) + ' · No limit set' : 'No budget set'}</div>`}
+  const sorted = Object.entries(subTotals).sort((a, b) => b[1].amount - a[1].amount).slice(0, 8);
+  if (!sorted.length) {
+    document.getElementById('chart-topcat').innerHTML = `<div class="chart-title">Top Spending</div><div style="color:var(--ink-lighter);font-size:13px;padding:20px 0;">No expense data this month.</div>`;
+    return;
+  }
+  const maxAmt = sorted[0][1].amount;
+
+  document.getElementById('chart-topcat').innerHTML = `
+    <div class="chart-title">Top Spending</div>
+    <div class="chart-subtitle">By subcategory · this month</div>
+    <div class="chart-card">
+      ${sorted.map(([name, v], i) => `
+        <div class="ranked-item">
+          <div class="ranked-num">${i + 1}</div>
+          <div class="ranked-label">${v.cat?.emoji || '•'} ${name}</div>
+          <div class="ranked-bar-wrap"><div class="ranked-bar-fill" style="width:${(v.amount/maxAmt*100).toFixed(1)}%"></div></div>
+          <div class="ranked-amount">${fmtNum(v.amount)}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ── 5. DAY-OF-WEEK PATTERN ──
+function renderDayOfWeek() {
+  const [y, m] = chartsMonth.split('-').map(Number);
+  const dowTotals = [0, 0, 0, 0, 0, 0, 0]; // Sun–Sat
+  const dowCounts = [0, 0, 0, 0, 0, 0, 0];
+
+  getMonthTxs(chartsMonth).filter(t => t.type === 'expense').forEach(t => {
+    const dow = new Date(t.date + 'T00:00:00').getDay();
+    dowTotals[dow] += t.convertedAmount;
+    dowCounts[dow]++;
+  });
+
+  // Count occurrences of each day in this month
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const occurrences = [0, 0, 0, 0, 0, 0, 0];
+  for (let d = 1; d <= daysInMonth; d++) {
+    occurrences[new Date(y, m - 1, d).getDay()]++;
+  }
+  const avgPerOccurrence = dowTotals.map((t, i) => occurrences[i] > 0 ? t / occurrences[i] : 0);
+  const maxAvg = Math.max(...avgPerOccurrence, 1);
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  const bars = avgPerOccurrence.map((avg, i) => {
+    const heightPct = avg / maxAvg * 100;
+    const isWeekend = i === 0 || i === 6;
+    return `<div class="dow-bar-wrap">
+      <div class="dow-amount">${avg > 0 ? fmtNum(avg) : ''}</div>
+      <div class="dow-bar" style="height:${heightPct}%;background:${isWeekend ? 'var(--warm-amber)' : 'var(--warm-red)'};"></div>
+      <div class="dow-label">${dayNames[i]}</div>
     </div>`;
   }).join('');
+
+  const totalDow = avgPerOccurrence.reduce((s, v) => s + v, 0);
+  const heaviest = dayNames[avgPerOccurrence.indexOf(maxAvg)];
+
+  document.getElementById('chart-dow').innerHTML = `
+    <div class="chart-title">Spending by Day</div>
+    <div class="chart-subtitle">Average per occurrence · <span style="color:var(--warm-amber);">■</span> weekend</div>
+    <div class="chart-card">
+      <div class="dow-grid">${bars}</div>
+      <div style="font-size:11px;color:var(--ink-lighter);margin-top:8px;padding-top:8px;border-top:1px solid var(--paper-darker);">
+        Heaviest day: <strong style="color:var(--ink);">${heaviest}</strong>
+        ${totalDow > 0 ? ` · Weekend avg: <strong style="color:var(--warm-amber);">${fmtDef((avgPerOccurrence[0]+avgPerOccurrence[6])/2)}</strong>` : ''}
+      </div>
+    </div>`;
+}
+
+// ── HELPERS ──
+function getLast6Months(endYm) {
+  const months = [];
+  const [y, m] = endYm.split('-').map(Number);
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(y, m - 1 - i);
+    months.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'));
+  }
+  return months;
 }
 
 function escapeAttr(s) { return s.replace(/'/g, "&#39;"); }
-
-let editingBudgetTarget = null, editingBudgetTargetType = null;
-function openBudgetModal(target, targetType, name) {
-  editingBudgetTarget = target;
-  editingBudgetTargetType = targetType;
-  budgetCtx = 'all';
-  document.getElementById('budgetModalTitle').textContent = 'Budget: ' + name;
-  const existing = data.budgets.find(b => b.target === target && b.targetType === targetType);
-  document.getElementById('budgetAmount').value = existing?.limit || '';
-  openModal('budgetModal');
-}
-function setBudgetCtx(ctx, btn) {
-  budgetCtx = ctx;
-  document.querySelectorAll('#budgetModal .toggle-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-}
-function saveBudget() {
-  const limit = parseFloat(document.getElementById('budgetAmount').value);
-  if (isNaN(limit) || limit < 0) { showToast('Enter a valid limit'); return; }
-  data.budgets = data.budgets.filter(b => !(b.target === editingBudgetTarget && b.targetType === editingBudgetTargetType));
-  if (limit > 0) data.budgets.push({ target: editingBudgetTarget, targetType: editingBudgetTargetType, limit, context: budgetCtx });
-  save(); closeModal('budgetModal'); renderBudgets(); showToast('Budget saved');
-}
 
 // ════════════════════════════════════════════════════════════
 // SETTINGS PAGE
@@ -1878,9 +2198,21 @@ function saveBudget() {
 
 function renderSettings() {
   const def = data.settings.defaultCurrency;
+  const theme = data.settings.theme || 'washi';
+  const themeNames = { washi: '🍵 Washi', forest: '🌲 Forest Ink', chalk: '✏️ Chalk' };
   document.getElementById('settingsContent').innerHTML = `
     <div class="settings-section">
-      <div class="settings-section-title">General</div>
+      <div class="settings-section-title">Appearance</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+        ${Object.entries(themeNames).map(([key, label]) => `
+          <div onclick="setTheme('${key}')" style="padding:12px 8px;text-align:center;border-radius:var(--radius-sm);border:2px solid ${theme===key?'var(--ink)':'var(--paper-darker)'};background:${theme===key?'var(--ink)':'var(--card-bg)'};color:${theme===key?'var(--paper)':'var(--ink-light)'};cursor:pointer;font-size:12px;transition:all 0.15s;">
+            <div style="font-size:18px;margin-bottom:4px;">${label.split(' ')[0]}</div>
+            <div>${label.split(' ').slice(1).join(' ')}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">Currency</div>
       <div class="settings-item" onclick="openDefaultCurrencyModal()">
         <span class="settings-item-label">Default Currency</span>
         <span class="settings-item-value">${def} <span class="settings-item-arrow">›</span></span>
@@ -1908,7 +2240,7 @@ function renderSettings() {
         <span class="settings-item-value">Download <span class="settings-item-arrow">›</span></span>
       </div>
       <div class="settings-item" onclick="openModal('importModal');resetImport()">
-        <span class="settings-item-label">Import from CSV</span>
+        <span class="settings-item-label">Import CSV / XLS / XLSX</span>
         <span class="settings-item-value">Upload <span class="settings-item-arrow">›</span></span>
       </div>
       <div class="settings-item" onclick="exportJSON()">
@@ -1928,8 +2260,22 @@ function renderSettings() {
       </div>
     </div>
     <div style="text-align:center;padding:24px 20px;font-size:11px;color:var(--ink-lighter);">
-      Kira — All data stored locally on your device only
+      Kira · All data stored locally on your device only
     </div>`;
+}
+
+function setTheme(theme) {
+  data.settings.theme = theme;
+  save();
+  applyTheme(theme);
+  renderSettings();
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme === 'washi' ? '' : theme);
+  const metaTheme = document.querySelector('meta[name=theme-color]');
+  const colors = { washi: '#f5f0e8', forest: '#1a2e1e', chalk: '#ffffff' };
+  if (metaTheme) metaTheme.content = colors[theme] || '#f5f0e8';
 }
 
 // ── CURRENCY MANAGER ──
@@ -1937,7 +2283,7 @@ function renderCurrencyList() {
   const def = data.settings.defaultCurrency;
   document.getElementById('newCurrencyRateLabel').textContent = `Rate to ${def}`;
   document.getElementById('currencyList').innerHTML = data.currencies.map(c => `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;background:white;border:1px solid var(--paper-darker);border-radius:8px;padding:10px 12px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;background:var(--card-bg);border:1px solid var(--paper-darker);border-radius:8px;padding:10px 12px;">
       <div style="flex:1;font-size:13px;font-weight:500;">${c.code} ${c.code === def ? '<span style="font-size:10px;color:var(--sage);background:var(--sage-pale);padding:2px 6px;border-radius:8px;">default</span>' : ''}</div>
       <div style="font-size:12px;color:var(--ink-light);">1 ${c.code} = ${c.rate} ${def}</div>
       ${c.code !== def ? `
@@ -2037,7 +2383,7 @@ function renderSubcatList() {
   const cat = getCatByIdType(managingCatId, managingCatType);
   if (!cat) return;
   document.getElementById('subcatList').innerHTML = cat.subs.map(s => `
-    <div style="display:flex;align-items:center;justify-content:space-between;background:white;border:1px solid var(--paper-darker);border-radius:8px;padding:10px 12px;margin-bottom:6px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--card-bg);border:1px solid var(--paper-darker);border-radius:8px;padding:10px 12px;margin-bottom:6px;">
       <span style="font-size:13px;">${s}</span>
       <button class="icon-btn" style="color:var(--warm-red)" onclick="deleteSubcat('${s.replace(/'/g,"\\'")}')">✕</button>
     </div>`).join('');
@@ -2140,15 +2486,53 @@ let csvParsed = []; // parsed objects ready for import
 function handleCSVUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
   const reader = new FileReader();
-  reader.onload = ev => {
-    const lines = ev.target.result.split('\n').filter(l => l.trim());
-    if (lines.length < 2) { showToast('CSV too short'); return; }
-    csvHeaders = parseCSVLine(lines[0]);
-    csvRows = lines.slice(1).map(parseCSVLine).filter(r => r.some(Boolean));
-    previewCSV();
-  };
-  reader.readAsText(file);
+
+  if (ext === 'csv') {
+    // Plain CSV — read as text
+    reader.onload = ev => {
+      const lines = ev.target.result.split('\n').filter(l => l.trim());
+      if (lines.length < 2) { showToast('File too short'); return; }
+      csvHeaders = parseCSVLine(lines[0]);
+      csvRows = lines.slice(1).map(parseCSVLine).filter(r => r.some(Boolean));
+      previewCSV();
+    };
+    reader.readAsText(file);
+  } else {
+    // XLS / XLSX — read as binary via SheetJS
+    reader.onload = ev => {
+      try {
+        const workbook = XLSX.read(ev.target.result, { type: 'binary', cellDates: true });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        // Convert to array of arrays (raw values)
+        const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+        if (aoa.length < 2) { showToast('File too short'); return; }
+        csvHeaders = aoa[0].map(h => String(h).trim());
+        csvRows = aoa.slice(1)
+          .filter(row => row.some(cell => cell !== ''))
+          .map(row => row.map(cell => {
+            // SheetJS returns Date objects when cellDates:true — format them
+            if (cell instanceof Date) {
+              const m = String(cell.getMonth()+1).padStart(2,'0');
+              const d = String(cell.getDate()).padStart(2,'0');
+              const y = cell.getFullYear();
+              const hh = String(cell.getHours()).padStart(2,'0');
+              const mm = String(cell.getMinutes()).padStart(2,'0');
+              const ss = String(cell.getSeconds()).padStart(2,'0');
+              return `${m}/${d}/${y} ${hh}:${mm}:${ss}`;
+            }
+            return String(cell ?? '').trim();
+          }));
+        previewCSV();
+      } catch(err) {
+        showToast('Could not read file — is it a valid XLS/XLSX?');
+        console.error(err);
+      }
+    };
+    reader.readAsBinaryString(file);
+  }
 }
 
 function parseCSVLine(line) {
@@ -2232,14 +2616,14 @@ function previewCSV() {
   // Show preview table
   const unmatched = [...new Set(csvParsed.filter(r => !r.matchedCat).map(r => r.catRaw))];
   const previewHTML = `
-    <div style="background:white;border:1px solid var(--paper-darker);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:12px;">
+    <div style="background:var(--card-bg);border:1px solid var(--paper-darker);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:12px;">
       <div style="padding:10px 14px;background:var(--paper-dark);font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-lighter);">Preview (first 4 rows)</div>
       ${csvParsed.slice(0,4).map(r => `
         <div style="display:grid;grid-template-columns:80px 1fr 1fr auto;gap:8px;padding:8px 14px;border-bottom:1px solid var(--paper-darker);font-size:12px;align-items:center;">
           <div style="color:var(--ink-lighter);">${r.date}</div>
           <div>${r.catRaw || '—'} ${r.subRaw ? '<span style="color:var(--ink-lighter)">· '+r.subRaw+'</span>' : ''}</div>
           <div style="font-size:11px;color:${r.context==='work'?'var(--warm-amber)':'var(--sage)'};">${r.context==='work'?'💼 Work':'👤 Personal'}</div>
-          <div style="font-family:var(--font-display);font-size:14px;color:${r.type==='income'?'var(--warm-green)':'var(--warm-red)'};">${r.type==='income'?'+':'−'}${r.convertedAmount.toFixed(2)}</div>
+          <div style="font-family:var(--font-mono);font-size:13px;color:${r.type==='income'?'var(--warm-green)':'var(--warm-red)'};">${r.type==='income'?'+':'−'}${r.convertedAmount.toFixed(2)}</div>
         </div>`).join('')}
     </div>
     ${unmatched.length ? `<div style="background:var(--warm-amber-pale);border:1px solid var(--warm-amber);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;font-size:12px;">
@@ -2353,6 +2737,7 @@ document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob
 
 renderTransactions();
 checkRecurringSuggestions();
+applyTheme(data.settings.theme || 'washi');
 </script>
 </body>
 </html>
