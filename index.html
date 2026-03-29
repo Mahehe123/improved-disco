@@ -715,10 +715,16 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
       </div>
       <!-- Claimable (Work only) -->
       <div class="form-group" id="claimableGroup" style="display:none;">
-        <label class="form-check">
-          <input type="checkbox" id="txClaimable">
-          <label for="txClaimable">Mark as claimable (work expense)</label>
-        </label>
+        <div style="background:var(--warm-amber-pale);border:1px solid var(--warm-amber);border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:15px;">🧾</span>
+            <span style="font-size:12px;color:var(--ink-light);">Auto-marked as claimable</span>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--ink-lighter);">
+            <input type="checkbox" id="txClaimable" style="accent-color:var(--warm-amber);">
+            override off
+          </label>
+        </div>
       </div>
       <!-- Claim month (Income + Claims category) -->
       <div class="form-group" id="claimMonthGroup" style="display:none;">
@@ -1093,6 +1099,9 @@ function changeAnalyticsMonth(dir) {
   const [y, m] = analyticsMonth.split('-').map(Number);
   const d = new Date(y, m - 1 + dir);
   analyticsMonth = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  // Reset claim date range so it recalculates for new month
+  window._claimFrom = null;
+  window._claimTo = null;
   renderAnalytics();
 }
 
@@ -1210,7 +1219,7 @@ function openAddTransaction() {
   document.getElementById('txNotes').value = '';
   document.getElementById('txTags').value = '';
   document.getElementById('txRecurring').checked = false;
-  document.getElementById('txClaimable').checked = false;
+  document.getElementById('txClaimable').checked = false; // will be auto-set by updateClaimableVisibility if work+expense
   document.getElementById('moreFields').classList.remove('open');
   document.getElementById('moreToggleIcon').textContent = '▸';
   document.getElementById('saveTxBtn').textContent = 'Save Entry';
@@ -1278,6 +1287,10 @@ function setContextSilent(ctx) {
 function updateClaimableVisibility() {
   const isWorkExpense = currentTxContext === 'work' && currentTxType === 'expense';
   document.getElementById('claimableGroup').style.display = isWorkExpense ? 'block' : 'none';
+  // Auto-check for work expenses — user can override off via checkbox
+  if (isWorkExpense) {
+    document.getElementById('txClaimable').checked = true;
+  }
   // Show claim month only for income with Claims category
   const catEl = document.getElementById('txCategory');
   const catId = catEl ? catEl.value : '';
@@ -1876,48 +1889,153 @@ function drawSankeyDiagram() {
 
 // ── CLAIMS TAB ──
 function renderClaimsTab() {
-  // Get all months with claimable work expenses
-  const claimableMonths = [...new Set(
-    data.transactions.filter(t => t.type==='expense' && t.context==='work' && t.claimable)
-      .map(t => t.date.slice(0,7))
-  )].sort((a,b)=>b.localeCompare(a));
+  // Load saved claim period settings
+  const claimDay = data.settings.claimCutoffDay || 25;
 
-  if (!claimableMonths.length) return `<div class="analytics-section"><div class="empty-state"><div class="emoji">🧾</div><p>No claimable work expenses yet.<br>Mark expenses as claimable when logging.</p></div></div>`;
+  // Build the UI — date range picker at top, then cards
+  const now = new Date();
+  const defaultTo = (() => {
+    // Default "to" date: the cutoff day of the analytics month
+    const [y, m] = analyticsMonth.split('-').map(Number);
+    const cutoff = new Date(y, m - 1, claimDay);
+    // Format as YYYY-MM-DD
+    return cutoff.toISOString().split('T')[0];
+  })();
+  const defaultFrom = (() => {
+    // "From" = cutoff day of the PREVIOUS month
+    const [y, m] = analyticsMonth.split('-').map(Number);
+    const prev = new Date(y, m - 2, claimDay);
+    return prev.toISOString().split('T')[0];
+  })();
+
+  // Use state if already set, else default
+  if (!window._claimFrom) window._claimFrom = defaultFrom;
+  if (!window._claimTo) window._claimTo = defaultTo;
+
+  const fromDate = window._claimFrom;
+  const toDate = window._claimTo;
+
+  // Filter work expenses in range
+  const workExp = data.transactions.filter(t =>
+    t.type === 'expense' && t.context === 'work' && t.claimable &&
+    t.date >= fromDate && t.date <= toDate
+  ).sort((a, b) => a.date.localeCompare(b.date));
+
+  const total = workExp.reduce((s, t) => s + t.convertedAmount, 0);
+
+  // Find claims income that covers any date in this range
+  const claimed = data.transactions.filter(t =>
+    t.type === 'income' && t.categoryId === 'clm' &&
+    t.claimMonth && t.claimMonth >= fromDate.slice(0,7) && t.claimMonth <= toDate.slice(0,7)
+  ).reduce((s, t) => s + t.convertedAmount, 0);
+
+  const status = total === 0 ? 'none' : claimed >= total ? 'settled' : claimed > 0 ? 'partial' : 'pending';
+  const pct = total > 0 ? Math.min(claimed / total * 100, 100) : 0;
+  const statusColors = { settled: 'var(--warm-green)', partial: 'var(--warm-amber)', pending: 'var(--warm-red)', none: 'var(--ink-lighter)' };
+  const statusLabel = { settled: '✓ Fully Settled', partial: '◑ Partially Settled', pending: '○ Pending Claim', none: '— No expenses' };
+
+  // Group expenses by category for breakdown
+  const byCat = {};
+  workExp.forEach(t => {
+    const cat = getCatById(t.categoryId);
+    const key = t.categoryId;
+    if (!byCat[key]) byCat[key] = { cat, items: [], total: 0 };
+    byCat[key].items.push(t);
+    byCat[key].total += t.convertedAmount;
+  });
 
   return `<div class="analytics-section">
-    <div class="section-title">Claims Reconciliation</div>
-    ${claimableMonths.map(ym => {
-      const workExp = data.transactions.filter(t => t.type==='expense'&&t.context==='work'&&t.claimable&&t.date.startsWith(ym));
-      const total = workExp.reduce((s,t)=>s+t.convertedAmount,0);
-      const claimed = data.transactions.filter(t=>t.type==='income'&&t.categoryId==='clm'&&t.claimMonth===ym)
-        .reduce((s,t)=>s+t.convertedAmount,0);
-      const status = claimed >= total ? 'settled' : claimed > 0 ? 'partial' : 'pending';
-      const pct = Math.min(claimed / total * 100, 100);
-      const statusColors = { settled: 'var(--warm-green)', partial: 'var(--warm-amber)', pending: 'var(--warm-red)' };
-      const statusLabel = { settled: '✓ Fully Settled', partial: '◑ Partially Settled', pending: '○ Pending' };
-      return `<div class="claim-row">
-        <div class="claim-row-header">
-          <div class="claim-row-title">${monthLabel(ym)}</div>
-          <div style="font-size:12px;font-weight:500;color:${statusColors[status]}">${statusLabel[status]}</div>
+
+    <!-- Date Range Picker -->
+    <div style="background:var(--card-bg);border:1px solid var(--paper-darker);border-radius:var(--radius);padding:14px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:500;color:var(--ink);">Claim Period</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-lighter);">
+          Cutoff day:
+          <select onchange="updateClaimCutoffDay(this.value)" style="padding:3px 6px;border:1px solid var(--paper-darker);border-radius:5px;font-size:11px;background:var(--card-bg);color:var(--ink);">
+            ${Array.from({length:28},(_,i)=>i+1).map(d =>
+              `<option value="${d}" ${d===claimDay?'selected':''}>${d}</option>`
+            ).join('')}
+          </select>
+          of month
         </div>
-        <div class="claim-row-amounts">
-          <span>Claimable: <strong>${fmtDef(total)}</strong></span>
-          <span>Claimed: <strong style="color:${statusColors[status]}">${fmtDef(claimed)}</strong></span>
-          ${status === 'partial' ? `<span style="color:var(--warm-red)">Gap: ${fmtDef(total-claimed)}</span>` : ''}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-lighter);margin-bottom:4px;">From</div>
+          <input type="date" value="${fromDate}" onchange="updateClaimRange('from',this.value)"
+            style="width:100%;padding:8px 10px;border:1px solid var(--paper-darker);border-radius:var(--radius-sm);font-size:13px;background:var(--card-bg);color:var(--ink);font-family:var(--font-body);">
         </div>
-        <div class="claim-progress"><div class="claim-progress-fill" style="width:${pct}%;background:${statusColors[status]}"></div></div>
-        <div style="margin-top:8px;">
-          ${workExp.map(t => {
-            const cat = getCatById(t.categoryId);
-            return `<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-light);padding:3px 0;border-bottom:1px solid var(--paper-darker);">
-              <span>${cat?.emoji||''} ${cat?.name||''} ${t.subcategory ? '· '+t.subcategory : ''}</span>
-              <span>${fmtDef(t.convertedAmount)}</span>
-            </div>`;
-          }).join('')}
+        <div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-lighter);margin-bottom:4px;">To</div>
+          <input type="date" value="${toDate}" onchange="updateClaimRange('to',this.value)"
+            style="width:100%;padding:8px 10px;border:1px solid var(--paper-darker);border-radius:var(--radius-sm);font-size:13px;background:var(--card-bg);color:var(--ink);font-family:var(--font-body);">
         </div>
-      </div>`;
-    }).join('')}
+      </div>
+      <div style="font-size:11px;color:var(--ink-lighter);margin-top:8px;">
+        💡 Your cycle: <strong style="color:var(--ink);">${new Date(fromDate+'T00:00:00').toLocaleDateString('en-MY',{day:'numeric',month:'short'})} → ${new Date(toDate+'T00:00:00').toLocaleDateString('en-MY',{day:'numeric',month:'short'})}</strong>
+      </div>
+    </div>
+
+    <!-- Summary Card -->
+    ${total === 0
+      ? `<div class="empty-state" style="padding:30px 0;"><div class="emoji">🧾</div><p>No claimable work expenses<br>in this period.</p></div>`
+      : `<div class="claim-row" style="margin-bottom:16px;">
+          <div class="claim-row-header">
+            <div>
+              <div class="claim-row-title" style="font-size:14px;">Period Summary</div>
+              <div style="font-size:11px;color:var(--ink-lighter);margin-top:2px;">${workExp.length} expense${workExp.length!==1?'s':''}</div>
+            </div>
+            <div style="font-size:12px;font-weight:500;color:${statusColors[status]}">${statusLabel[status]}</div>
+          </div>
+          <div class="claim-row-amounts" style="margin-bottom:8px;">
+            <span>Total claimable: <strong style="font-family:var(--font-mono);">${fmtDef(total)}</strong></span>
+            <span>Claimed: <strong style="color:${statusColors[status]};font-family:var(--font-mono);">${fmtDef(claimed)}</strong></span>
+          </div>
+          ${status === 'partial' ? `<div style="font-size:12px;color:var(--warm-red);margin-bottom:8px;">⚠️ Shortfall: <strong>${fmtDef(total - claimed)}</strong></div>` : ''}
+          <div class="claim-progress"><div class="claim-progress-fill" style="width:${pct.toFixed(1)}%;background:${statusColors[status]}"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-lighter);margin-top:4px;">
+            <span>${pct.toFixed(0)}% claimed</span>
+            <span>${fmtDef(Math.max(total - claimed, 0))} remaining</span>
+          </div>
+        </div>
+
+        <!-- Category Breakdown -->
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-lighter);font-weight:500;margin-bottom:8px;">Breakdown</div>
+        ${Object.values(byCat).sort((a,b)=>b.total-a.total).map(({cat, items, total: catTotal}) => `
+          <div class="claim-row" style="margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <div style="font-size:13px;font-weight:500;">${cat?.emoji||'📤'} ${cat?.name||'Other'}</div>
+              <div style="font-family:var(--font-mono);font-size:13px;">${fmtDef(catTotal)}</div>
+            </div>
+            ${items.map(t => `
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-light);padding:4px 0;border-bottom:1px solid var(--paper-darker);">
+                <div>
+                  <span>${t.subcategory || '—'}</span>
+                  <span style="color:var(--ink-lighter);margin-left:6px;">${new Date(t.date+'T00:00:00').toLocaleDateString('en-MY',{day:'numeric',month:'short'})}</span>
+                </div>
+                <span style="font-family:var(--font-mono);">${fmtDef(t.convertedAmount)}</span>
+              </div>`).join('')}
+          </div>`).join('')}
+      `}
   </div>`;
+}
+
+function updateClaimRange(which, val) {
+  if (which === 'from') window._claimFrom = val;
+  else window._claimTo = val;
+  // Re-render just the claims tab content
+  document.getElementById('analyticsContent').innerHTML = renderClaimsTab();
+}
+
+function updateClaimCutoffDay(day) {
+  data.settings.claimCutoffDay = parseInt(day);
+  save();
+  // Recalculate default dates based on new cutoff
+  const [y, m] = analyticsMonth.split('-').map(Number);
+  window._claimTo = new Date(y, m - 1, parseInt(day)).toISOString().split('T')[0];
+  window._claimFrom = new Date(y, m - 2, parseInt(day)).toISOString().split('T')[0];
+  document.getElementById('analyticsContent').innerHTML = renderClaimsTab();
 }
 
 // ════════════════════════════════════════════════════════════
