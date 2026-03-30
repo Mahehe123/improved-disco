@@ -2029,7 +2029,7 @@ function renderClaimsTab() {
                 <div>
                   <span style="font-weight:500;">${t.subcategory || '—'}</span>
                   <span style="color:var(--ink-lighter);margin-left:6px;">${new Date(t.date+'T00:00:00').toLocaleDateString('en-MY',{day:'numeric',month:'short'})}</span>
-                  ${t.notes ? `<span style="color:var(--ink-lighter);margin-left:4px;">· ${t.notes.slice(0,20)}</span>` : ''}
+                  ${t.notes ? '<span style="color:var(--ink-lighter);margin-left:4px;">· ' + t.notes.slice(0,20) + '</span>' : ''}
                 </div>
                 <div style="display:flex;align-items:center;gap:8px;">
                   <span style="font-family:var(--font-mono);">${fmtDef(t.convertedAmount)}</span>
@@ -2561,7 +2561,9 @@ async function refreshRates() {
   renderSettings();
   showToast(`${updated} rates updated ✓`);
 }
-  const def = data.settings.defaultCurrency;
+
+// ── CURRENCY MANAGER ──
+function renderCurrencyList() {
   document.getElementById('newCurrencyRateLabel').textContent = `Rate to ${def}`;
   document.getElementById('currencyList').innerHTML = data.currencies.map(c => `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;background:var(--card-bg);border:1px solid var(--paper-darker);border-radius:8px;padding:10px 12px;">
