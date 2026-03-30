@@ -70,30 +70,30 @@
   --overlay-bg: rgba(0,0,0,0.7);
 }
 
-/* ══ THEME: CHALK (editorial) ══ */
-[data-theme="chalk"] {
-  --paper: #ffffff;
-  --paper-dark: #f4f4f4;
-  --paper-darker: #e8e8e8;
-  --card-bg: #ffffff;
-  --ink: #0a0a0a;
-  --ink-light: #444444;
-  --ink-lighter: #888888;
-  --sage: #e6a817;
-  --sage-light: #f0c050;
-  --sage-pale: #fdf6e0;
-  --stone: #666666;
-  --stone-light: #999999;
-  --warm-red: #cc3322;
-  --warm-red-pale: #fff0ee;
-  --warm-green: #1a7a3a;
-  --warm-green-pale: #eaf5ee;
-  --warm-amber: #e6a817;
-  --warm-amber-pale: #fdf6e0;
-  --shadow-sm: 0 1px 0px rgba(0,0,0,0.12);
-  --shadow-md: 0 2px 8px rgba(0,0,0,0.08);
-  --shadow-lg: 0 4px 20px rgba(0,0,0,0.10);
-  --overlay-bg: rgba(0,0,0,0.5);
+/* ══ THEME: DRAGONITE (pokemon) ══ */
+[data-theme="dragonite"] {
+  --paper: #fdf6e3;
+  --paper-dark: #f5ead0;
+  --paper-darker: #e8d9b0;
+  --card-bg: #fffdf5;
+  --ink: #2d3a1e;
+  --ink-light: #4a5c2e;
+  --ink-lighter: #8a9e6a;
+  --sage: #e8a020;
+  --sage-light: #f0bc50;
+  --sage-pale: #fef3d0;
+  --stone: #c07830;
+  --stone-light: #d4a060;
+  --warm-red: #d44820;
+  --warm-red-pale: #fde8d8;
+  --warm-green: #3a7a28;
+  --warm-green-pale: #d8f0c8;
+  --warm-amber: #e8a020;
+  --warm-amber-pale: #fef3d0;
+  --shadow-sm: 0 1px 4px rgba(45,58,30,0.10);
+  --shadow-md: 0 4px 16px rgba(45,58,30,0.13);
+  --shadow-lg: 0 8px 32px rgba(45,58,30,0.18);
+  --overlay-bg: rgba(30,45,15,0.6);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -1425,6 +1425,9 @@ function reconcileClaims(claimMonth) {
 function closeTxModal() {
   closeModal('txModal');
   editingTxId = null;
+  if (typeof window._afterTxClose === 'function') {
+    window._afterTxClose();
+  }
 }
 
 // ════════════════════════════════════════════════════════════
@@ -2009,7 +2012,12 @@ function renderClaimsTab() {
         </div>
 
         <!-- Category Breakdown -->
-        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-lighter);font-weight:500;margin-bottom:8px;">Breakdown</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-lighter);font-weight:500;">Breakdown</div>
+          <button onclick="exportClaimsCSV('${fromDate}','${toDate}')" style="padding:5px 12px;background:var(--ink);color:var(--paper);border:none;border-radius:6px;font-size:11px;font-family:var(--font-body);cursor:pointer;">
+            ↓ Export CSV
+          </button>
+        </div>
         ${Object.values(byCat).sort((a,b)=>b.total-a.total).map(({cat, items, total: catTotal}) => `
           <div class="claim-row" style="margin-bottom:8px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -2017,12 +2025,16 @@ function renderClaimsTab() {
               <div style="font-family:var(--font-mono);font-size:13px;">${fmtDef(catTotal)}</div>
             </div>
             ${items.map(t => `
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-light);padding:4px 0;border-bottom:1px solid var(--paper-darker);">
+              <div onclick="editTxFromClaims('${t.id}')" style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-light);padding:6px 0;border-bottom:1px solid var(--paper-darker);cursor:pointer;transition:background 0.1s;" onmouseenter="this.style.background='var(--paper-dark)'" onmouseleave="this.style.background='none'">
                 <div>
-                  <span>${t.subcategory || '—'}</span>
+                  <span style="font-weight:500;">${t.subcategory || '—'}</span>
                   <span style="color:var(--ink-lighter);margin-left:6px;">${new Date(t.date+'T00:00:00').toLocaleDateString('en-MY',{day:'numeric',month:'short'})}</span>
+                  ${t.notes ? `<span style="color:var(--ink-lighter);margin-left:4px;">· ${t.notes.slice(0,20)}</span>` : ''}
                 </div>
-                <span style="font-family:var(--font-mono);">${fmtDef(t.convertedAmount)}</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="font-family:var(--font-mono);">${fmtDef(t.convertedAmount)}</span>
+                  <span style="color:var(--ink-lighter);font-size:10px;">✏️</span>
+                </div>
               </div>`).join('')}
           </div>`).join('')}
       `}
@@ -2039,11 +2051,53 @@ function updateClaimRange(which, val) {
 function updateClaimCutoffDay(day) {
   data.settings.claimCutoffDay = parseInt(day);
   save();
-  // Recalculate default dates based on new cutoff
   const [y, m] = analyticsMonth.split('-').map(Number);
   window._claimTo = new Date(y, m - 1, parseInt(day)).toISOString().split('T')[0];
   window._claimFrom = new Date(y, m - 2, parseInt(day)).toISOString().split('T')[0];
   document.getElementById('analyticsContent').innerHTML = renderClaimsTab();
+}
+
+function editTxFromClaims(id) {
+  // Open the tx edit modal, then on close return to claims tab
+  editTx(id);
+  // After modal closes, re-render claims tab
+  const origClose = window._afterTxClose;
+  window._afterTxClose = () => {
+    document.getElementById('analyticsContent').innerHTML = renderClaimsTab();
+    window._afterTxClose = origClose;
+  };
+}
+
+function exportClaimsCSV(fromDate, toDate) {
+  const workExp = data.transactions.filter(t =>
+    t.type === 'expense' && t.context === 'work' && t.claimable &&
+    t.date >= fromDate && t.date <= toDate
+  ).sort((a, b) => a.date.localeCompare(b.date));
+
+  if (!workExp.length) { showToast('No expenses to export'); return; }
+
+  const def = data.settings.defaultCurrency;
+  const headers = ['Date','Category','Subcategory','Amount','Currency',`Amount (${def})`,'Notes'];
+  const rows = workExp.map(t => {
+    const cat = getCatById(t.categoryId);
+    return [
+      t.date,
+      cat?.name || t.categoryId,
+      t.subcategory || '',
+      t.amount,
+      t.currency,
+      t.convertedAmount.toFixed(2),
+      t.notes || ''
+    ].map(v => '"' + String(v).replace(/"/g, '""') + '"');
+  });
+
+  const total = workExp.reduce((s, t) => s + t.convertedAmount, 0);
+  rows.push(['', '', '"TOTAL"', '', '', `"${total.toFixed(2)}"`, '']);
+
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const filename = `kira-claims-${fromDate}-to-${toDate}.csv`;
+  downloadFile(csv, filename, 'text/csv');
+  showToast('Claims report exported');
 }
 
 // ════════════════════════════════════════════════════════════
@@ -2359,7 +2413,15 @@ function escapeAttr(s) { return s.replace(/'/g, "&#39;"); }
 function renderSettings() {
   const def = data.settings.defaultCurrency;
   const theme = data.settings.theme || 'washi';
-  const themeNames = { washi: '🍵 Washi', forest: '🌲 Forest Ink', chalk: '✏️ Chalk' };
+  const themeNames = { washi: '🍵 Washi', forest: '🌲 Forest Ink', dragonite: '🐉 Dragonite' };
+  const lastUpdated = data.settings.ratesUpdatedAt;
+  const ratesAge = lastUpdated ? Math.floor((Date.now() - lastUpdated) / 86400000) : null;
+  const ratesLabel = ratesAge === null ? 'Never updated' :
+    ratesAge === 0 ? 'Updated today' :
+    ratesAge === 1 ? 'Updated yesterday' :
+    `Updated ${ratesAge} days ago`;
+  const ratesColor = ratesAge === null || ratesAge > 7 ? 'var(--warm-red)' : ratesAge > 3 ? 'var(--warm-amber)' : 'var(--warm-green)';
+
   document.getElementById('settingsContent').innerHTML = `
     <div class="settings-section">
       <div class="settings-section-title">Appearance</div>
@@ -2380,6 +2442,15 @@ function renderSettings() {
       <div class="settings-item" onclick="openModal('currencyModal');renderCurrencyList()">
         <span class="settings-item-label">Currencies & Exchange Rates</span>
         <span class="settings-item-value">${data.currencies.length} currencies <span class="settings-item-arrow">›</span></span>
+      </div>
+      <div class="settings-item" style="cursor:default;">
+        <div>
+          <div class="settings-item-label">Live Rate Refresh</div>
+          <div style="font-size:11px;color:${ratesColor};margin-top:2px;">${ratesLabel}</div>
+        </div>
+        <button onclick="refreshRates()" id="refreshRatesBtn" style="padding:7px 14px;background:var(--ink);color:var(--paper);border:none;border-radius:var(--radius-sm);font-size:12px;font-family:var(--font-body);cursor:pointer;">
+          Refresh
+        </button>
       </div>
     </div>
     <div class="settings-section">
@@ -2434,12 +2505,62 @@ function setTheme(theme) {
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme === 'washi' ? '' : theme);
   const metaTheme = document.querySelector('meta[name=theme-color]');
-  const colors = { washi: '#f5f0e8', forest: '#1a2e1e', chalk: '#ffffff' };
+  const colors = { washi: '#f5f0e8', forest: '#1a2e1e', dragonite: '#fdf6e3' };
   if (metaTheme) metaTheme.content = colors[theme] || '#f5f0e8';
 }
 
 // ── CURRENCY MANAGER ──
-function renderCurrencyList() {
+// ── LIVE RATE REFRESH ──
+async function refreshRates() {
+  const btn = document.getElementById('refreshRatesBtn');
+  if (btn) { btn.textContent = '⏳ Fetching…'; btn.disabled = true; }
+
+  const base = data.settings.defaultCurrency.toLowerCase();
+  const today = new Date().toISOString().split('T')[0];
+
+  // fawazahmed0 currency API — free, no key, daily updated
+  const urls = [
+    `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${today}/v1/currencies/${base}.json`,
+    `https://latest.currency-api.pages.dev/v1/currencies/${base}.json`
+  ];
+
+  let rates = null;
+  for (const url of urls) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const json = await res.json();
+      rates = json[base];
+      break;
+    } catch(e) { continue; }
+  }
+
+  if (!rates) {
+    showToast('Could not fetch rates — check connection');
+    if (btn) { btn.textContent = 'Refresh'; btn.disabled = false; }
+    return;
+  }
+
+  // Update all non-default currencies
+  let updated = 0;
+  data.currencies.forEach(c => {
+    if (c.code === data.settings.defaultCurrency) { c.rate = 1; return; }
+    const code = c.code.toLowerCase();
+    if (rates[code] !== undefined) {
+      c.rate = parseFloat((1 / rates[code]).toFixed(6));
+      // If base is MYR, rate[usd] = how many USD per 1 MYR, so 1 USD = 1/rate MYR
+      // Actually: rates[code] = how many "code" per 1 base
+      // So 1 code = (1 / rates[code]) base — correct for our storage format
+      updated++;
+    }
+  });
+
+  data.settings.ratesUpdatedAt = Date.now();
+  save();
+  renderCurrencyList();
+  renderSettings();
+  showToast(`${updated} rates updated ✓`);
+}
   const def = data.settings.defaultCurrency;
   document.getElementById('newCurrencyRateLabel').textContent = `Rate to ${def}`;
   document.getElementById('currencyList').innerHTML = data.currencies.map(c => `
