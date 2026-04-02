@@ -70,83 +70,77 @@
   --overlay-bg: rgba(0,0,0,0.7);
 }
 
-/* ══ THEME: DRAGONITE (pokemon) ══ */
-[data-theme="pokemon"] {
-  --paper: #fafafa;
-  --paper-dark: #f0f0f0;
-  --paper-darker: #dcdcdc;
-  --card-bg: #ffffff;
-  --ink: #1a1a2e;
-  --ink-light: #3d3d5c;
-  --ink-lighter: #8888aa;
-  --sage: #3b4cca;
-  --sage-light: #6675e0;
-  --sage-pale: #e8eafe;
-  --stone: #cc0000;
-  --stone-light: #e84040;
-  --warm-red: #cc0000;
-  --warm-red-pale: #fde8e8;
-  --warm-green: #3d8c3d;
-  --warm-green-pale: #d8f0d8;
-  --warm-amber: #ffcb05;
-  --warm-amber-pale: #fff8d0;
-  --shadow-sm: 0 1px 4px rgba(26,26,46,0.10);
-  --shadow-md: 0 4px 16px rgba(26,26,46,0.14);
-  --shadow-lg: 0 8px 32px rgba(26,26,46,0.20);
-  --overlay-bg: rgba(26,26,46,0.6);
+/* ══ THEME: TIDE (ocean/coastal) ══ */
+[data-theme="tide"] {
+  --paper: #0d1f2d;
+  --paper-dark: #122536;
+  --paper-darker: #1a3347;
+  --card-bg: #122536;
+  --ink: #e8f4f8;
+  --ink-light: #a8ccd8;
+  --ink-lighter: #5a8fa8;
+  --sage: #4ecdc4;
+  --sage-light: #7eddd6;
+  --sage-pale: #0d2e30;
+  --stone: #f7a278;
+  --stone-light: #f9b898;
+  --warm-red: #e8735a;
+  --warm-red-pale: #2d1a14;
+  --warm-green: #4ecdc4;
+  --warm-green-pale: #0d2e30;
+  --warm-amber: #f7a278;
+  --warm-amber-pale: #2d2014;
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+  --overlay-bg: rgba(0,10,20,0.75);
 }
 
-/* ══ POKÉMON THEME EXTRAS ══ */
-[data-theme="pokemon"] body {
-  background-image: radial-gradient(circle at 20% 10%, rgba(59,76,202,0.06) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 90%, rgba(204,0,0,0.05) 0%, transparent 50%);
+/* ══ TIDE THEME EXTRAS ══ */
+[data-theme="tide"] body {
+  background-image:
+    radial-gradient(ellipse at 10% 0%, rgba(78,205,196,0.08) 0%, transparent 55%),
+    radial-gradient(ellipse at 90% 100%, rgba(247,162,120,0.06) 0%, transparent 55%);
 }
-[data-theme="pokemon"] .nav-bar {
-  border-top: 3px solid var(--warm-amber);
-  background: linear-gradient(180deg, #fff 0%, #f8f8ff 100%);
+[data-theme="tide"] .bottom-nav {
+  background: linear-gradient(180deg, #0d1f2d 0%, #091820 100%);
+  border-top: 1px solid #1a3347;
 }
-[data-theme="pokemon"] .nav-tab.active {
-  color: var(--stone);
+[data-theme="tide"] .top-header {
+  background: linear-gradient(180deg, #0d1f2d 0%, rgba(13,31,45,0.95) 100%);
 }
-[data-theme="pokemon"] .nav-tab.active::after {
-  background: var(--stone);
+[data-theme="tide"] .nav-item.active {
+  color: var(--sage);
 }
-[data-theme="pokemon"] .page-title {
-  font-family: var(--font-display);
-  background: linear-gradient(135deg, #cc0000 0%, #3b4cca 100%);
+[data-theme="tide"] .btn-primary {
+  background: linear-gradient(135deg, #2a7a74, #4ecdc4);
+}
+[data-theme="tide"] .fab {
+  background: linear-gradient(135deg, #2a7a74, #4ecdc4);
+  color: #0d1f2d;
+}
+[data-theme="tide"] .top-header h1 {
+  background: linear-gradient(135deg, #4ecdc4 0%, #a8ccd8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-[data-theme="pokemon"] .card {
-  border: 1.5px solid var(--paper-darker);
-  border-radius: 12px;
+[data-theme="tide"] .modal {
+  background: #122536;
+  border: 1px solid #1a3347;
 }
-[data-theme="pokemon"] .btn-primary {
-  background: linear-gradient(135deg, #cc0000, #3b4cca);
-  border: none;
+[data-theme="tide"] .tx-icon.income { background: rgba(78,205,196,0.15); }
+[data-theme="tide"] .tx-icon.expense { background: rgba(232,115,90,0.15); }
+[data-theme="tide"] .net-positive { color: #4ecdc4; }
+[data-theme="tide"] .net-negative { color: #e8735a; }
+/* Wave shimmer on active nav */
+@keyframes tide-shimmer {
+  0%   { opacity: 0.6; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.6; }
 }
-[data-theme="pokemon"] .kpi-card {
-  border-top: 3px solid var(--warm-amber);
-}
-[data-theme="pokemon"] .tab-bar {
-  border-bottom: 2px solid var(--warm-amber);
-}
-/* Pokéball divider */
-[data-theme="pokemon"] .divider {
-  position: relative;
-  overflow: visible;
-}
-[data-theme="pokemon"] .divider::after {
-  content: '⚾';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 12px;
-  background: var(--card-bg);
-  padding: 0 6px;
-  line-height: 1;
+[data-theme="tide"] .nav-item.active svg {
+  animation: tide-shimmer 2.5s ease-in-out infinite;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -390,6 +384,7 @@ html, body {
 }
 .insight-card.positive { background: var(--warm-green-pale); border-left-color: var(--warm-green); }
 .insight-card.negative { background: var(--warm-red-pale); border-left-color: var(--warm-red); }
+.insight-card.neutral  { background: var(--paper-dark); border-left-color: var(--ink-lighter); }
 .insight-card.neutral { background: var(--warm-amber-pale); border-left-color: var(--warm-amber); }
 .insight-card .icon { font-size: 16px; margin-top: 1px; }
 .insight-card .text { font-size: 13px; line-height: 1.4; }
@@ -429,6 +424,19 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
 /* ── CHARTS PAGE ── */
 .chart-block { padding: 0 20px 24px; }
 .chart-title { font-family: var(--font-display); font-size: 17px; font-weight: 500; margin-bottom: 4px; color: var(--ink); }
+.chart-collapse-header {
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; padding: 4px 0 10px; user-select: none;
+}
+.chart-collapse-header:hover .chart-collapse-chevron { color: var(--ink); }
+.chart-collapse-chevron {
+  font-size: 13px; color: var(--ink-lighter);
+  transition: transform 0.2s ease;
+  flex-shrink: 0; margin-left: 8px;
+}
+.chart-collapse-chevron.collapsed { transform: rotate(-90deg); }
+.chart-collapse-body { overflow: hidden; transition: max-height 0.25s ease, opacity 0.2s ease; }
+.chart-collapse-body.collapsed { max-height: 0 !important; opacity: 0; }
 .chart-subtitle { font-size: 11px; color: var(--ink-lighter); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.05em; }
 .chart-card { background: var(--card-bg); border: 1px solid var(--paper-darker); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
 
@@ -1272,9 +1280,11 @@ function renderTransactions() {
     else if (diff === 1) label = 'Yesterday';
     else if (diff < 0) label = '📅 ' + d.toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short' });
     else label = d.toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short' });
+    // Sort within day by createdAt descending — latest entry at top
+    const sorted = [...items].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     return `<div class="tx-section">
       <div class="tx-date-label">${label}</div>
-      ${items.map(t => txItemHTML(t)).join('')}
+      ${sorted.map(t => txItemHTML(t)).join('')}
     </div>`;
   };
 
@@ -1800,85 +1810,110 @@ function renderAnalyticsContent() {
 
 // ── INSIGHT CARDS ──
 function buildInsightCards(ym) {
-  const [y, m] = ym.split('-').map(Number);
-  const today   = new Date(); today.setHours(0,0,0,0);
+  const [y, m]   = ym.split('-').map(Number);
+  const today    = new Date(); today.setHours(0,0,0,0);
   const todayStr = today.toISOString().split('T')[0];
-  const isCurrentMonth = todayStr.startsWith(ym);
+  const isCurrentMonth  = todayStr.startsWith(ym);
+  const daysInMonth     = new Date(y, m, 0).getDate();
+  const cutoffDay       = isCurrentMonth ? today.getDate() : daysInMonth;
+  const daysLeft        = daysInMonth - cutoffDay;
 
-  // For current month: only compare up to today's day number
-  // For past months: compare full month vs full month
-  const cutoffDay = isCurrentMonth ? today.getDate() : new Date(y, m, 0).getDate();
-  const cutoffStr = `${y}-${String(m).padStart(2,'0')}-${String(cutoffDay).padStart(2,'0')}`;
+  // Mode: 'early' (day 1–4), 'mid' (day 5–25), 'late' (day 26–end) or 'complete' for past months
+  const mode = !isCurrentMonth ? 'complete'
+    : cutoffDay <= 4  ? 'early'
+    : daysLeft <= 5   ? 'late'
+    : 'mid';
 
-  // Prev month same day range
+  // Prev month
   const prevDate = new Date(y, m - 2);
-  const prevYm   = prevDate.getFullYear() + '-' + String(prevDate.getMonth() + 1).padStart(2, '0');
+  const prevYm   = prevDate.getFullYear() + '-' + String(prevDate.getMonth() + 1).padStart(2,'0');
   const [py, pm] = prevYm.split('-').map(Number);
-  const prevCutoffDay = isCurrentMonth ? Math.min(cutoffDay, new Date(py, pm, 0).getDate()) : new Date(py, pm, 0).getDate();
-  const prevCutoffStr = `${py}-${String(pm).padStart(2,'0')}-${String(prevCutoffDay).padStart(2,'0')}`;
+  const prevDays = new Date(py, pm, 0).getDate();
+  const prevLabel = prevDate.toLocaleString('en-MY', { month: 'long' });
 
-  // Transactions filtered to matching window
+  // Transactions for current window
+  const cutoffStr     = `${y}-${String(m).padStart(2,'0')}-${String(cutoffDay).padStart(2,'0')}`;
+  const prevCutoffDay = Math.min(cutoffDay, prevDays);
   const curTxs  = getMonthTxs(ym).filter(t => t.date <= cutoffStr);
-  const prevTxs = getMonthTxs(prevYm).filter(t => {
-    // Map prev month dates to same relative day range
-    const d = parseInt(t.date.split('-')[2]);
-    return d <= prevCutoffDay;
-  });
+  const prevTxs = getMonthTxs(prevYm).filter(t => parseInt(t.date.split('-')[2]) <= prevCutoffDay);
+  const allPrevTxs = getMonthTxs(prevYm);
 
-  const curExp  = curTxs.filter(t => t.type === 'expense').reduce((s,t) => s + t.convertedAmount, 0);
-  const curInc  = curTxs.filter(t => t.type === 'income').reduce((s,t) => s + t.convertedAmount, 0);
-  const prevExp = prevTxs.filter(t => t.type === 'expense').reduce((s,t) => s + t.convertedAmount, 0);
-  const curNet  = curInc - curExp;
-
-  // Suppress insights if too little data (fewer than 5 days in)
-  const enoughData = !isCurrentMonth || cutoffDay >= 5;
+  const curExp   = curTxs.filter(t => t.type==='expense').reduce((s,t)=>s+t.convertedAmount,0);
+  const curInc   = curTxs.filter(t => t.type==='income').reduce((s,t)=>s+t.convertedAmount,0);
+  const curNet   = curInc - curExp;
+  const prevExp  = prevTxs.filter(t => t.type==='expense').reduce((s,t)=>s+t.convertedAmount,0);
+  const prevExpFull = allPrevTxs.filter(t => t.type==='expense').reduce((s,t)=>s+t.convertedAmount,0);
+  const dailyAvg = cutoffDay > 0 ? curExp / cutoffDay : 0;
 
   const cards = [];
   const thresh = { pct: 10, abs: 50 };
-  const periodLabel = isCurrentMonth
-    ? `first ${cutoffDay} day${cutoffDay !== 1 ? 's' : ''}`
-    : 'full month';
 
-  // Net position
-  if (curNet > 0) {
-    cards.push({ type: 'positive', icon: '✨',
-      text: `Net savings (${periodLabel}): <strong>${fmtDef(curNet)}</strong>` });
-  } else if (curNet < 0) {
-    cards.push({ type: 'negative', icon: '⚠️',
-      text: `Overspent by <strong>${fmtDef(Math.abs(curNet))}</strong> over the ${periodLabel}` });
+  // ── DAILY AVERAGE — always shown ──
+  if (cutoffDay >= 2 && curExp > 0) {
+    const projectedFullMonth = dailyAvg * daysInMonth;
+    cards.push({ type: 'neutral', icon: '📊',
+      text: `Daily avg spend: <strong>${fmtDef(dailyAvg)}</strong>${isCurrentMonth ? ` · projected month-end: <strong>${fmtDef(projectedFullMonth)}</strong>` : ''}` });
   }
 
-  // Total expenses vs same window last month
-  if (enoughData && prevExp > 0) {
-    const diff = curExp - prevExp;
-    const pct  = Math.abs(diff / prevExp * 100);
-    if (pct >= thresh.pct && Math.abs(diff) >= thresh.abs) {
-      cards.push({ type: diff > 0 ? 'negative' : 'positive', icon: diff > 0 ? '📈' : '📉',
-        text: `Total spend <strong>${diff > 0 ? 'up' : 'down'} ${pct.toFixed(0)}%</strong> vs same period last month (${diff > 0 ? '+' : ''}${fmtDef(diff)})` });
+  if (mode === 'early') {
+    // Silent on comparisons — just show net
+    if (curNet > 0) cards.push({ type: 'positive', icon: '✨', text: `Net so far: <strong>${fmtDef(curNet)}</strong>` });
+    else if (curNet < 0) cards.push({ type: 'negative', icon: '⚠️', text: `Overspent by <strong>${fmtDef(Math.abs(curNet))}</strong> so far` });
+
+  } else if (mode === 'mid') {
+    // Like-for-like cumulative comparison
+    if (curNet > 0) cards.push({ type: 'positive', icon: '✨', text: `Net (first ${cutoffDay} days): <strong>${fmtDef(curNet)}</strong>` });
+    else if (curNet < 0) cards.push({ type: 'negative', icon: '⚠️', text: `Overspent by <strong>${fmtDef(Math.abs(curNet))}</strong> in first ${cutoffDay} days` });
+
+    if (prevExp > 0) {
+      const diff = curExp - prevExp; const pct = Math.abs(diff / prevExp * 100);
+      if (pct >= thresh.pct && Math.abs(diff) >= thresh.abs)
+        cards.push({ type: diff>0?'negative':'positive', icon: diff>0?'📈':'📉',
+          text: `Spend <strong>${diff>0?'up':'down'} ${pct.toFixed(0)}%</strong> vs same ${cutoffDay} days in ${prevLabel} (${diff>0?'+':''}${fmtDef(diff)})` });
     }
-  }
+    // Category deltas mid-month
+    const curE = curTxs.filter(t=>t.type==='expense');
+    const preE = prevTxs.filter(t=>t.type==='expense');
+    [...new Set([...curE,...preE].map(t=>t.categoryId))].forEach(cid => {
+      const cat = getCatById(cid); if (!cat) return;
+      const c = curE.filter(t=>t.categoryId===cid).reduce((s,t)=>s+t.convertedAmount,0);
+      const p = preE.filter(t=>t.categoryId===cid).reduce((s,t)=>s+t.convertedAmount,0);
+      if (!p || !c) return;
+      const diff=c-p, pct=Math.abs(diff/p*100);
+      if (pct>=20 && Math.abs(diff)>=thresh.abs)
+        cards.push({ type:diff>0?'negative':'positive', icon:cat.emoji,
+          text:`${cat.name} <strong>${diff>0?'up':'down'} ${pct.toFixed(0)}%</strong> vs same period in ${prevLabel} (${fmtDef(Math.abs(diff))} ${diff>0?'more':'less'})` });
+    });
 
-  // Category deltas — like-for-like window
-  if (enoughData) {
-    const curExpTxs  = curTxs.filter(t => t.type === 'expense');
-    const prevExpTxs = prevTxs.filter(t => t.type === 'expense');
-    const allCatIds  = [...new Set([...curExpTxs, ...prevExpTxs].map(t => t.categoryId))];
-    allCatIds.forEach(cid => {
-      const cat = getCatById(cid);
-      if (!cat) return;
-      const c = curExpTxs.filter(t => t.categoryId === cid).reduce((s,t) => s + t.convertedAmount, 0);
-      const p = prevExpTxs.filter(t => t.categoryId === cid).reduce((s,t) => s + t.convertedAmount, 0);
-      if (p === 0 || c === 0) return;
-      const diff = c - p;
-      const pct  = Math.abs(diff / p * 100);
-      if (pct >= 20 && Math.abs(diff) >= thresh.abs) {
-        cards.push({ type: diff > 0 ? 'negative' : 'positive', icon: cat.emoji,
-          text: `${cat.name} <strong>${diff > 0 ? 'up' : 'down'} ${pct.toFixed(0)}%</strong> vs same period last month (${fmtDef(Math.abs(diff))} ${diff > 0 ? 'more' : 'less'})` });
-      }
+  } else {
+    // Late / complete — project full month and compare
+    const projected = isCurrentMonth ? dailyAvg * daysInMonth : curExp;
+    if (prevExpFull > 0) {
+      const diff = projected - prevExpFull; const pct = Math.abs(diff/prevExpFull*100);
+      const onTrack = projected <= prevExpFull;
+      cards.push({ type: onTrack?'positive':'negative', icon: onTrack?'🎯':'⚠️',
+        text: isCurrentMonth
+          ? `On pace to spend <strong>${fmtDef(projected)}</strong> this month vs <strong>${fmtDef(prevExpFull)}</strong> in ${prevLabel} (${diff>0?'+':''}${fmtDef(diff)})`
+          : `Total expenses <strong>${diff>0?'up':'down'} ${pct.toFixed(0)}%</strong> vs ${prevLabel} (${diff>0?'+':''}${fmtDef(diff)})` });
+    }
+    if (curNet > 0) cards.push({ type:'positive', icon:'✨', text:`Net ${isCurrentMonth?'so far':'this month'}: <strong>${fmtDef(curNet)}</strong>` });
+    else if (curNet < 0) cards.push({ type:'negative', icon:'⚠️', text:`Overspent by <strong>${fmtDef(Math.abs(curNet))}</strong>${isCurrentMonth?' so far':' this month'}` });
+    // Category deltas — full month basis
+    const curE = getMonthTxs(ym).filter(t=>t.type==='expense');
+    const preE = allPrevTxs.filter(t=>t.type==='expense');
+    [...new Set([...curE,...preE].map(t=>t.categoryId))].forEach(cid => {
+      const cat=getCatById(cid); if (!cat) return;
+      const c=curE.filter(t=>t.categoryId===cid).reduce((s,t)=>s+t.convertedAmount,0);
+      const p=preE.filter(t=>t.categoryId===cid).reduce((s,t)=>s+t.convertedAmount,0);
+      if (!p || !c) return;
+      const diff=c-p, pct=Math.abs(diff/p*100);
+      if (pct>=20 && Math.abs(diff)>=thresh.abs)
+        cards.push({ type:diff>0?'negative':'positive', icon:cat.emoji,
+          text:`${cat.name} <strong>${diff>0?'up':'down'} ${pct.toFixed(0)}%</strong> vs ${prevLabel} (${fmtDef(Math.abs(diff))} ${diff>0?'more':'less'})` });
     });
   }
 
-  return cards.slice(0, 5);
+  return cards.slice(0, 6);
 }
 
 // ── SPEND FORECAST ──
@@ -1969,23 +2004,26 @@ function renderSummaryTab() {
       <!-- Compound daily chart -->
       <div class="card" style="padding:14px;margin-bottom:16px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
-          <div style="font-size:12px;font-weight:500;color:var(--ink);">Daily Accumulation — ${monthLabel(analyticsMonth)}</div>
+          <div style="font-size:12px;font-weight:500;color:var(--ink);">Expense Accumulation — ${monthLabel(analyticsMonth)} vs ${monthLabel((() => { const [y,m]=analyticsMonth.split('-').map(Number); const d=new Date(y,m-2); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); })())}</div>
         </div>
         <div style="font-size:10px;color:var(--ink-lighter);margin-bottom:10px;">Tap any day to view entries</div>
         <canvas id="summaryDailyChart" height="180" style="width:100%;display:block;cursor:pointer;" onclick="summaryChartClick(event)"></canvas>
         <!-- Legend -->
         <div style="display:flex;gap:14px;margin-top:10px;flex-wrap:wrap;">
           <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--ink-light);">
-            <div style="width:16px;height:2px;background:var(--warm-green);border-radius:1px;"></div>Income
+            <div style="width:16px;height:2.5px;background:var(--warm-red);border-radius:1px;"></div>This month
           </div>
-          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--ink-light);">
-            <div style="width:16px;height:2px;background:var(--warm-red);border-radius:1px;"></div>Expenses
-          </div>
-          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--ink-light);">
-            <div style="width:16px;height:2px;background:var(--sage);border-radius:1px;"></div>Net
+          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--ink-lighter);">
+            <div style="width:16px;height:2px;border-top:1.5px dashed var(--warm-red);opacity:0.4;"></div>Last month
           </div>
           <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--ink-lighter);">
             <div style="width:16px;height:2px;border-top:2px dashed var(--ink-lighter);"></div>Forecast
+          </div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--ink-lighter);">
+            <div style="width:12px;height:8px;background:rgba(var(--warm-green-rgb,78,205,196),0.15);border:1px solid var(--warm-green);border-radius:2px;"></div>Under last month
+          </div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--ink-lighter);">
+            <div style="width:12px;height:8px;background:rgba(var(--warm-red-rgb,232,115,90),0.15);border:1px solid var(--warm-red);border-radius:2px;opacity:0.5;"></div>Over last month
           </div>
         </div>
         <!-- Tooltip -->
@@ -2012,251 +2050,273 @@ function drawSummaryDailyChart() {
   const canvas = document.getElementById('summaryDailyChart');
   if (!canvas) return;
 
-  const [y, m]     = analyticsMonth.split('-').map(Number);
+  const [y, m]      = analyticsMonth.split('-').map(Number);
   const daysInMonth = new Date(y, m, 0).getDate();
   const today       = new Date(); today.setHours(0,0,0,0);
   const todayStr    = today.toISOString().split('T')[0];
   const isCurrentMonth = todayStr.startsWith(analyticsMonth);
   const todayDay    = isCurrentMonth ? today.getDate() : daysInMonth;
-  const txs         = getMonthTxs(analyticsMonth);
 
-  // Build per-day totals
-  const dailyIncome  = new Array(daysInMonth).fill(0);
-  const dailyExpense = new Array(daysInMonth).fill(0);
-  txs.forEach(t => {
-    const d = parseInt(t.date.split('-')[2]) - 1; // 0-indexed
-    if (d < 0 || d >= daysInMonth) return;
-    if (t.type === 'income')  dailyIncome[d]  += t.convertedAmount;
-    if (t.type === 'expense') dailyExpense[d] += t.convertedAmount;
+  // Previous month
+  const prevDate = new Date(y, m - 2);
+  const prevYm   = prevDate.getFullYear() + '-' + String(prevDate.getMonth() + 1).padStart(2,'0');
+  const prevDays = new Date(prevDate.getFullYear(), prevDate.getMonth() + 1, 0).getDate();
+
+  // Build per-day expense totals — this month & prev month
+  const dailyExp     = new Array(daysInMonth).fill(0);
+  const dailyExpPrev = new Array(prevDays).fill(0);
+
+  getMonthTxs(analyticsMonth).filter(t => t.type === 'expense').forEach(t => {
+    const d = parseInt(t.date.split('-')[2]) - 1;
+    if (d >= 0 && d < daysInMonth) dailyExp[d] += t.convertedAmount;
+  });
+  getMonthTxs(prevYm).filter(t => t.type === 'expense').forEach(t => {
+    const d = parseInt(t.date.split('-')[2]) - 1;
+    if (d >= 0 && d < prevDays) dailyExpPrev[d] += t.convertedAmount;
   });
 
-  // Build cumulative arrays (step/hold)
-  const cumIncome  = []; let ci = 0;
-  const cumExpense = []; let ce = 0;
-  const cumNet     = [];
-  for (let i = 0; i < daysInMonth; i++) {
-    ci += dailyIncome[i];
-    ce += dailyExpense[i];
-    cumIncome.push(ci);
-    cumExpense.push(ce);
-    cumNet.push(ci - ce);
-  }
+  // Cumulative arrays
+  const cumExp = []; let ce = 0;
+  for (let i = 0; i < daysInMonth; i++) { ce += dailyExp[i]; cumExp.push(ce); }
 
-  // Forecast: project from today to end of month at daily pace
-  const daysPassed = Math.max(todayDay, 1);
-  const dailyBurnRate = ce / daysPassed;
-  const dailyIncomeRate = ci / daysPassed;
-  const forecastExpense = []; const forecastNet = []; const forecastIncome = [];
-  for (let i = 0; i < daysInMonth; i++) {
-    if (i < todayDay) {
-      forecastExpense.push(null); forecastNet.push(null); forecastIncome.push(null);
-    } else {
-      const extraDays = i - todayDay + 1;
-      forecastExpense.push(ce + dailyBurnRate * extraDays);
-      forecastIncome.push(ci + dailyIncomeRate * extraDays);
-      forecastNet.push((ci + dailyIncomeRate * extraDays) - (ce + dailyBurnRate * extraDays));
+  const cumExpPrev = []; let cp = 0;
+  for (let i = 0; i < prevDays; i++) { cp += dailyExpPrev[i]; cumExpPrev.push(cp); }
+
+  // Forecast from today to month-end
+  const daysPassed    = Math.max(todayDay, 1);
+  const dailyBurnRate = cumExp[todayDay - 1] / daysPassed;
+  const forecastExp   = new Array(daysInMonth).fill(null);
+  if (isCurrentMonth) {
+    for (let i = todayDay; i < daysInMonth; i++) {
+      forecastExp[i] = cumExp[todayDay - 1] + dailyBurnRate * (i - todayDay + 1);
     }
   }
 
-  // Store data on canvas for click handler
-  canvas._chartData = { cumIncome, cumExpense, cumNet, forecastExpense, forecastIncome, forecastNet,
-                         dailyIncome, dailyExpense, daysInMonth, todayDay, isCurrentMonth, y, m };
+  // Store for click handler
+  canvas._chartData = {
+    cumExp, cumExpPrev, forecastExp,
+    dailyExp, dailyExpPrev,
+    daysInMonth, prevDays, todayDay, isCurrentMonth, y, m, prevYm
+  };
 
   // Canvas setup
-  const dpr = window.devicePixelRatio || 1;
+  const dpr  = window.devicePixelRatio || 1;
   canvas.width  = canvas.offsetWidth * dpr;
-  canvas.height = 180 * dpr;
-  const ctx = canvas.getContext('2d');
+  canvas.height = 200 * dpr;
+  const ctx  = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
-  const W = canvas.offsetWidth, H = 180;
-  const pad = { t: 14, r: 12, b: 28, l: 52 };
+  const W = canvas.offsetWidth, H = 200;
+  const pad = { t: 18, r: 14, b: 30, l: 54 };
   const cW = W - pad.l - pad.r, cH = H - pad.t - pad.b;
 
-  // Colours from theme
-  const clrGreen  = cssVar('--warm-green');
+  // Theme colours
   const clrRed    = cssVar('--warm-red');
-  const clrSage   = cssVar('--sage');
   const clrGrid   = cssVar('--paper-darker');
   const clrInkL   = cssVar('--ink-lighter');
   const clrPaper  = cssVar('--card-bg');
+  const clrGreen  = cssVar('--warm-green');
 
-  // Y range: span all real + forecast values
+  // Parse hex to rgb for alpha fills
+  function hexRgb(hex) {
+    const h = hex.replace('#','');
+    return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+  }
+  const [rR,gR,bR] = hexRgb(clrRed.startsWith('#') ? clrRed : '#e8735a');
+  const [rG,gG,bG] = hexRgb(clrGreen.startsWith('#') ? clrGreen : '#4ecdc4');
+
+  // Y range across both months + forecast
   const allVals = [
-    ...cumIncome, ...cumExpense, ...cumNet,
-    ...(isCurrentMonth ? forecastExpense.filter(Boolean) : []),
-    ...(isCurrentMonth ? forecastNet.filter(Boolean) : []),
+    ...cumExp.slice(0, todayDay),
+    ...cumExpPrev,
+    ...(isCurrentMonth ? forecastExp.filter(v => v !== null) : []),
     0
   ];
-  const minV = Math.min(...allVals);
   const maxV = Math.max(...allVals, 1);
-  const range = maxV - minV || 1;
+  const minV = 0;
+  const range = maxV - minV;
 
-  const xOf  = i => pad.l + (i / (daysInMonth - 1)) * cW;
-  const yOf  = v => pad.t + cH - ((v - minV) / range * cH);
+  const xOf  = i  => pad.l + (i / (daysInMonth - 1)) * cW;
+  const xOfP = i  => pad.l + (i / (daysInMonth - 1)) * cW; // prev mapped to same x scale
+  const yOf  = v  => pad.t + cH - ((v - minV) / range * cH);
 
-  // Grid lines & Y labels
+  // Grid lines
   ctx.strokeStyle = clrGrid; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-  [0, 0.25, 0.5, 0.75, 1].forEach(frac => {
-    const v = minV + frac * range;
-    const y2 = yOf(v);
-    ctx.beginPath(); ctx.moveTo(pad.l, y2); ctx.lineTo(pad.l + cW, y2); ctx.stroke();
+  [0.25, 0.5, 0.75, 1].forEach(frac => {
+    const v = frac * maxV;
+    const yy = yOf(v);
+    ctx.beginPath(); ctx.moveTo(pad.l, yy); ctx.lineTo(pad.l + cW, yy); ctx.stroke();
     ctx.fillStyle = clrInkL;
     ctx.font = `9px ${cssVar('--font-mono') || 'monospace'}`;
     ctx.textAlign = 'right';
-    const label = Math.abs(v) >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(0);
-    ctx.fillText(label, pad.l - 4, y2 + 3);
+    const lbl = v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(0);
+    ctx.fillText(lbl, pad.l - 5, yy + 3);
   });
   ctx.setLineDash([]);
 
-  // Zero line if needed
-  if (minV < 0) {
-    const zy = yOf(0);
-    ctx.strokeStyle = clrGrid; ctx.lineWidth = 1.5; ctx.setLineDash([2, 4]);
-    ctx.beginPath(); ctx.moveTo(pad.l, zy); ctx.lineTo(pad.l + cW, zy); ctx.stroke();
+  // ── DELTA SHADING between prev month and this month ──
+  // Green fill where this month < prev month (under), red fill where this month > prev month (over)
+  // Only shade up to todayDay
+  const shadeEnd = isCurrentMonth ? todayDay : daysInMonth;
+  for (let i = 0; i < shadeEnd - 1; i++) {
+    const x1 = xOf(i),   x2 = xOf(i + 1);
+    // Map to prev month's scale (prev month may have different day count)
+    const pi1 = Math.round(i     / (daysInMonth - 1) * (prevDays - 1));
+    const pi2 = Math.round((i+1) / (daysInMonth - 1) * (prevDays - 1));
+    const cy1 = yOf(cumExp[i]),       cy2 = yOf(cumExp[i + 1]);
+    const py1 = yOf(cumExpPrev[pi1] || cp), py2 = yOf(cumExpPrev[pi2] || cp);
+
+    const thisAbove = cumExp[i] > (cumExpPrev[pi1] || 0);
+    const [r2, g2, b2] = thisAbove ? [rR, gR, bR] : [rG, gG, bG];
+    ctx.beginPath();
+    ctx.moveTo(x1, cy1); ctx.lineTo(x2, cy2);
+    ctx.lineTo(x2, py2); ctx.lineTo(x1, py1);
+    ctx.closePath();
+    ctx.fillStyle = `rgba(${r2},${g2},${b2},0.12)`;
+    ctx.fill();
+  }
+
+  // ── Prev month line (full, dashed, muted) ──
+  ctx.beginPath();
+  ctx.strokeStyle = `rgba(${rR},${gR},${bR},0.35)`;
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 3]);
+  cumExpPrev.forEach((v, i) => {
+    const x2 = pad.l + (i / (daysInMonth - 1)) * cW;
+    i === 0 ? ctx.moveTo(x2, yOf(v)) : ctx.lineTo(x2, yOf(v));
+  });
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ── Forecast dotted line ──
+  if (isCurrentMonth) {
+    ctx.beginPath();
+    ctx.strokeStyle = `rgba(${rR},${gR},${bR},0.5)`;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 4]);
+    let started = false;
+    // bridge from last real point
+    ctx.moveTo(xOf(todayDay - 1), yOf(cumExp[todayDay - 1]));
+    for (let i = todayDay; i < daysInMonth; i++) {
+      if (forecastExp[i] !== null) ctx.lineTo(xOf(i), yOf(forecastExp[i]));
+    }
+    ctx.stroke();
     ctx.setLineDash([]);
   }
 
-  // Today vertical marker
-  if (isCurrentMonth && todayDay <= daysInMonth) {
-    const tx2 = xOf(todayDay - 1);
+  // ── This month solid line ──
+  ctx.beginPath();
+  ctx.strokeStyle = clrRed;
+  ctx.lineWidth = 2.5;
+  for (let i = 0; i < todayDay; i++) {
+    i === 0 ? ctx.moveTo(xOf(i), yOf(cumExp[i])) : ctx.lineTo(xOf(i), yOf(cumExp[i]));
+  }
+  ctx.stroke();
+
+  // Today dot
+  if (isCurrentMonth) {
+    const tx2 = xOf(todayDay - 1), ty = yOf(cumExp[todayDay - 1]);
+    ctx.beginPath(); ctx.arc(tx2, ty, 4.5, 0, Math.PI * 2);
+    ctx.fillStyle = clrRed; ctx.fill();
+    ctx.beginPath(); ctx.arc(tx2, ty, 4.5, 0, Math.PI * 2);
+    ctx.strokeStyle = clrPaper; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Today vertical marker
     ctx.strokeStyle = clrInkL; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
     ctx.beginPath(); ctx.moveTo(tx2, pad.t); ctx.lineTo(tx2, pad.t + cH); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = clrInkL;
     ctx.font = `9px ${cssVar('--font-body') || 'sans-serif'}`;
-    ctx.textAlign = 'center';
-    ctx.fillText('today', tx2, pad.t - 2);
+    ctx.textAlign = tx2 > W / 2 ? 'right' : 'center';
+    ctx.fillText('today', tx2 + (tx2 > W/2 ? -4 : 0), pad.t - 4);
   }
 
-  // Draw a stepped/smooth line
-  function drawLine(data, color, lineWidth, dashed) {
-    const pts = data.map((v, i) => v !== null ? { x: xOf(i), y: yOf(v) } : null).filter(Boolean);
-    // Find contiguous segments (skip nulls)
-    const segments = [];
-    let seg = [];
-    data.forEach((v, i) => {
-      if (v !== null) { seg.push({ x: xOf(i), y: yOf(v) }); }
-      else { if (seg.length) { segments.push(seg); seg = []; } }
-    });
-    if (seg.length) segments.push(seg);
-
-    ctx.strokeStyle = color; ctx.lineWidth = lineWidth;
-    if (dashed) ctx.setLineDash([5, 4]); else ctx.setLineDash([]);
-    segments.forEach(s => {
-      ctx.beginPath();
-      ctx.moveTo(s[0].x, s[0].y);
-      for (let i = 1; i < s.length; i++) {
-        // Smooth curve
-        const mx = (s[i-1].x + s[i].x) / 2;
-        ctx.bezierCurveTo(mx, s[i-1].y, mx, s[i].y, s[i].x, s[i].y);
-      }
-      ctx.stroke();
-    });
-    ctx.setLineDash([]);
-  }
-
-  // Area fill under income (subtle)
-  const incPts = cumIncome.map((v, i) => ({ x: xOf(i), y: yOf(v) }));
-  const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + cH);
-  const hex = clrGreen.replace('#','');
-  const r2 = parseInt(hex.slice(0,2)||'5a',16);
-  const g2 = parseInt(hex.slice(2,4)||'7a',16);
-  const b2 = parseInt(hex.slice(4,6)||'52',16);
-  grad.addColorStop(0, `rgba(${r2},${g2},${b2},0.10)`);
-  grad.addColorStop(1, `rgba(${r2},${g2},${b2},0.01)`);
-  ctx.beginPath();
-  ctx.moveTo(incPts[0].x, incPts[0].y);
-  for (let i = 1; i < incPts.length; i++) {
-    const mx = (incPts[i-1].x + incPts[i].x) / 2;
-    ctx.bezierCurveTo(mx, incPts[i-1].y, mx, incPts[i].y, incPts[i].x, incPts[i].y);
-  }
-  ctx.lineTo(incPts[incPts.length-1].x, pad.t + cH);
-  ctx.lineTo(incPts[0].x, pad.t + cH);
-  ctx.fillStyle = grad; ctx.fill();
-
-  // Solid lines
-  drawLine(cumIncome,  clrGreen, 2,   false);
-  drawLine(cumExpense, clrRed,   2,   false);
-  drawLine(cumNet,     clrSage,  1.5, false);
-
-  // Forecast dashed lines (current month only)
-  if (isCurrentMonth) {
-    // Bridge from last real point to first forecast point
-    const bridgeExp = [...new Array(todayDay - 1).fill(null), cumExpense[todayDay-1], forecastExpense[todayDay]];
-    const bridgeNet = [...new Array(todayDay - 1).fill(null), cumNet[todayDay-1],     forecastNet[todayDay]];
-    const bridgeInc = [...new Array(todayDay - 1).fill(null), cumIncome[todayDay-1],  forecastIncome[todayDay]];
-    drawLine([...new Array(todayDay).fill(null), ...forecastExpense.slice(todayDay)], clrRed,   1.5, true);
-    drawLine([...new Array(todayDay).fill(null), ...forecastNet.slice(todayDay)],     clrSage,  1,   true);
-    drawLine([...new Array(todayDay).fill(null), ...forecastIncome.slice(todayDay)],  clrGreen, 1.5, true);
-  }
-
-  // End-of-month dots
-  const lastDay = isCurrentMonth ? todayDay - 1 : daysInMonth - 1;
-  [[cumIncome, clrGreen], [cumExpense, clrRed], [cumNet, clrSage]].forEach(([arr, clr]) => {
-    const x2 = xOf(lastDay), y2 = yOf(arr[lastDay]);
-    ctx.beginPath(); ctx.arc(x2, y2, 4, 0, Math.PI*2);
-    ctx.fillStyle = clr; ctx.fill();
-    ctx.beginPath(); ctx.arc(x2, y2, 4, 0, Math.PI*2);
-    ctx.strokeStyle = clrPaper; ctx.lineWidth = 1.5; ctx.stroke();
-  });
-
-  // X axis: show day labels every ~5 days
+  // X axis — day labels
   ctx.fillStyle = clrInkL;
   ctx.font = `9px ${cssVar('--font-body') || 'sans-serif'}`;
   ctx.textAlign = 'center';
-  const step = daysInMonth <= 28 ? 7 : daysInMonth <= 31 ? 7 : 10;
-  for (let i = 0; i < daysInMonth; i += step) {
-    ctx.fillText(i + 1, xOf(i), H - pad.b + 12);
+  [1, 5, 10, 15, 20, 25, daysInMonth].forEach(d => {
+    if (d <= daysInMonth) ctx.fillText(d, xOf(d - 1), H - pad.b + 12);
+  });
+
+  // Month end dot (past months)
+  if (!isCurrentMonth) {
+    const ex = xOf(daysInMonth - 1), ey = yOf(cumExp[daysInMonth - 1]);
+    ctx.beginPath(); ctx.arc(ex, ey, 4, 0, Math.PI * 2);
+    ctx.fillStyle = clrRed; ctx.fill();
+    ctx.beginPath(); ctx.arc(ex, ey, 4, 0, Math.PI * 2);
+    ctx.strokeStyle = clrPaper; ctx.lineWidth = 1.5; ctx.stroke();
   }
-  ctx.fillText(daysInMonth, xOf(daysInMonth - 1), H - pad.b + 12);
+
+  // Y axis currency label
+  ctx.save();
+  ctx.translate(10, pad.t + cH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = clrInkL;
+  ctx.font = `9px ${cssVar('--font-body') || 'sans-serif'}`;
+  ctx.textAlign = 'center';
+  ctx.fillText(data.settings.defaultCurrency, 0, 0);
+  ctx.restore();
 }
 
 function summaryChartClick(event) {
   const canvas = document.getElementById('summaryDailyChart');
   if (!canvas || !canvas._chartData) return;
-  const { cumIncome, cumExpense, cumNet, forecastExpense, forecastIncome, forecastNet,
-          dailyIncome, dailyExpense, daysInMonth, todayDay, isCurrentMonth, y, m } = canvas._chartData;
+  const { cumExp, cumExpPrev, forecastExp, dailyExp, daysInMonth, prevDays, todayDay, isCurrentMonth, y, m, prevYm } = canvas._chartData;
 
-  const rect   = canvas.getBoundingClientRect();
-  const clickX = event.clientX - rect.left;
-  const pad    = { l: 52, r: 12 };
-  const cW     = rect.width - pad.l - pad.r;
-  const rawDay = Math.round((clickX - pad.l) / cW * (daysInMonth - 1));
+  const rect    = canvas.getBoundingClientRect();
+  const clickX  = event.clientX - rect.left;
+  const padL = 54, padR = 14;
+  const cW   = rect.width - padL - padR;
+  const rawDay = Math.round((clickX - padL) / cW * (daysInMonth - 1));
   const day    = Math.max(0, Math.min(daysInMonth - 1, rawDay));
   const dayNum = day + 1;
   const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
-
   const isForecast = isCurrentMonth && dayNum > todayDay;
+
   const tooltip = document.getElementById('summaryChartTooltip');
+  if (!tooltip) return;
+
+  // Map to prev month day (proportional)
+  const pi      = Math.round(day / (daysInMonth - 1) * (prevDays - 1));
+  const prevVal = cumExpPrev[pi] || 0;
+  const thisVal = isForecast ? (forecastExp[day] || cumExp[day]) : cumExp[day];
+  const delta   = thisVal - prevVal;
+  const deltaClr = delta > 0 ? 'var(--warm-red)' : 'var(--warm-green)';
+  const deltaSign = delta > 0 ? '+' : '';
+  const prevDate  = new Date(y, m - 2);
+  const prevLabel = prevDate.toLocaleString('en-MY', { month: 'short', year: 'numeric' });
 
   if (isForecast) {
-    const fi = forecastIncome[day] || cumIncome[day];
-    const fe = forecastExpense[day] || cumExpense[day];
-    const fn2 = forecastNet[day] || cumNet[day];
     tooltip.style.display = 'block';
-    tooltip.innerHTML = `<strong>Day ${dayNum} (forecast)</strong><br>
-      <span style="color:var(--warm-green);">↑ Income: ${fmtDef(fi)}</span> &nbsp;
-      <span style="color:var(--warm-red);">↓ Expenses: ${fmtDef(fe)}</span> &nbsp;
-      <span style="color:var(--sage);">Net: ${fmtDef(fn2)}</span>`;
-  } else {
-    const txsOnDay = getMonthTxs(analyticsMonth).filter(t => t.date === dateStr);
-    tooltip.style.display = 'block';
-    tooltip.innerHTML = `<div style="margin-bottom:6px;"><strong>Day ${dayNum}</strong> &nbsp;
-      <span style="color:var(--warm-green);">↑ ${fmtDef(cumIncome[day])}</span> &nbsp;
-      <span style="color:var(--warm-red);">↓ ${fmtDef(cumExpense[day])}</span> &nbsp;
-      <span style="color:var(--sage);">Net ${fmtDef(cumNet[day])}</span></div>` +
-      (txsOnDay.length
-        ? txsOnDay.map(t => {
-            const cat = getCatById(t.categoryId);
-            return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--paper-darker);font-size:11px;">
-              <span>${cat?.emoji||''} ${cat?.name||'—'}${t.subcategory?' · '+t.subcategory:''}</span>
-              <span style="font-family:var(--font-mono);color:${t.type==='income'?'var(--warm-green)':'var(--warm-red)'};">${t.type==='income'?'+':'-'}${fmtDef(t.convertedAmount).replace(/[A-Z]+\s?/,'')}</span>
-            </div>`;
-          }).join('') + `<div style="margin-top:6px;font-size:11px;color:var(--sage);cursor:pointer;" onclick="drillToDate('${dateStr}')">View all →</div>`
-        : `<div style="color:var(--ink-lighter);font-size:11px;">No transactions on this day</div>`);
+    tooltip.innerHTML =
+      `<strong>Day ${dayNum} — Forecast</strong><br>` +
+      `<span style="color:var(--warm-red);">Projected spend: ${fmtDef(thisVal)}</span> &nbsp; ` +
+      `<span style="color:${deltaClr};">${deltaSign}${fmtDef(delta)} vs ${prevLabel}</span>`;
+    return;
   }
-}
 
+  const txsOnDay = getMonthTxs(analyticsMonth).filter(t => t.date === dateStr && t.type === 'expense');
+  tooltip.style.display = 'block';
+  tooltip.innerHTML =
+    `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">` +
+      `<strong>Day ${dayNum}</strong>` +
+      `<span style="font-size:11px;color:${deltaClr};">${deltaSign}${fmtDef(delta)} vs ${prevLabel}</span>` +
+    `</div>` +
+    `<div style="font-size:11px;color:var(--ink-light);margin-bottom:6px;">` +
+      `Cumulative: <strong style="font-family:var(--font-mono);">${fmtDef(thisVal)}</strong> &nbsp;·&nbsp; ` +
+      `Today: <strong style="font-family:var(--font-mono);">${fmtDef(dailyExp[day])}</strong>` +
+    `</div>` +
+    (txsOnDay.length
+      ? txsOnDay.map(t => {
+          const cat = getCatById(t.categoryId);
+          return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--paper-darker);font-size:11px;">` +
+            `<span>${cat?.emoji||''} ${cat?.name||'—'}${t.subcategory?' · '+t.subcategory:''}</span>` +
+            `<span style="font-family:var(--font-mono);color:var(--warm-red);">${fmtDef(t.convertedAmount)}</span>` +
+          `</div>`;
+        }).join('') +
+        `<div style="margin-top:6px;font-size:11px;color:var(--sage);cursor:pointer;" onclick="drillToDate('${dateStr}')">View all →</div>`
+      : `<div style="color:var(--ink-lighter);font-size:11px;">No expenses on this day</div>`);
+}
 // ── BALANCE TAB ──
 function renderBalanceTab() {
   return `<div class="trend-canvas-wrap">
@@ -2872,15 +2932,61 @@ function changeChartsMonth(dir) {
   renderCharts();
 }
 
+// ── CHART COLLAPSE HELPER ──
+function toggleChart(id) {
+  if (!data.settings.collapsedCharts) data.settings.collapsedCharts = [];
+  const idx = data.settings.collapsedCharts.indexOf(id);
+  if (idx >= 0) data.settings.collapsedCharts.splice(idx, 1);
+  else data.settings.collapsedCharts.push(id);
+  save();
+
+  const body    = document.getElementById('chartbody-' + id);
+  const chevron = document.getElementById('chartchev-' + id);
+  const isNowCollapsed = data.settings.collapsedCharts.includes(id);
+  if (body)    body.classList.toggle('collapsed', isNowCollapsed);
+  if (chevron) chevron.classList.toggle('collapsed', isNowCollapsed);
+
+  // If expanding a canvas-based chart, redraw it after transition
+  if (!isNowCollapsed) {
+    setTimeout(() => {
+      if (id === 'savings')  renderSavingsRate();
+      if (id === 'heatmap')  renderHeatmap();
+      if (id === 'cattrend') renderCatTrend();
+      if (id === 'topcat')   renderTopSubcategories();
+      if (id === 'dow')      renderDayOfWeek();
+    }, 260);
+  }
+}
+
+function chartWrap(id, title, subtitle, innerHTML) {
+  if (!data.settings.collapsedCharts) data.settings.collapsedCharts = [];
+  const collapsed = data.settings.collapsedCharts.includes(id);
+  return `
+    <div class="chart-block">
+      <div class="chart-collapse-header" onclick="toggleChart('${id}')">
+        <div>
+          <div class="chart-title">${title}</div>
+          ${subtitle ? `<div class="chart-subtitle">${subtitle}</div>` : ''}
+        </div>
+        <span id="chartchev-${id}" class="chart-collapse-chevron${collapsed ? ' collapsed' : ''}">▾</span>
+      </div>
+      <div id="chartbody-${id}" class="chart-collapse-body${collapsed ? ' collapsed' : ''}" style="max-height:2000px;">
+        ${innerHTML}
+      </div>
+    </div>`;
+}
+
 function renderCharts() {
   document.getElementById('chartsMonthLabel').textContent = monthLabel(chartsMonth);
   const el = document.getElementById('chartsContent');
+  if (!data.settings.collapsedCharts) data.settings.collapsedCharts = [];
+  // Render placeholder wrappers, then fill each chart
   el.innerHTML = `
-    <div id="chart-savings" class="chart-block"></div>
-    <div id="chart-heatmap" class="chart-block"></div>
-    <div id="chart-cattrend" class="chart-block"></div>
-    <div id="chart-topcat" class="chart-block"></div>
-    <div id="chart-dow" class="chart-block"></div>
+    <div id="chart-savings"></div>
+    <div id="chart-heatmap"></div>
+    <div id="chart-cattrend"></div>
+    <div id="chart-topcat"></div>
+    <div id="chart-dow"></div>
   `;
   renderSavingsRate();
   renderHeatmap();
@@ -2912,9 +3018,7 @@ function renderSavingsRate() {
 
   const sparkColor = isPos ? 'var(--warm-green)' : 'var(--warm-red)';
 
-  document.getElementById('chart-savings').innerHTML = `
-    <div class="chart-title">Savings Rate</div>
-    <div class="chart-subtitle">Net ÷ Income · 6-month view</div>
+  document.getElementById('chart-savings').innerHTML = chartWrap('savings', 'Savings Rate', 'Net ÷ Income · 6-month view', `
     <div class="chart-card">
       <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;">
         <div>
@@ -2947,7 +3051,7 @@ function renderSavingsRate() {
           </div>`;
         }).join('')}
       </div>
-    </div>`;
+    </div>`);
 }
 
 // ── 2. SPENDING HEATMAP ──
@@ -2984,9 +3088,7 @@ function renderHeatmap() {
     </div>`);
   }
 
-  document.getElementById('chart-heatmap').innerHTML = `
-    <div class="chart-title">Spending Heatmap</div>
-    <div class="chart-subtitle">Daily expense intensity</div>
+  document.getElementById('chart-heatmap').innerHTML = chartWrap('heatmap', 'Spending Heatmap', 'Daily expense intensity', `
     <div class="chart-card">
       <div class="heatmap-day-labels">${dayLabels.map(l => `<div class="heatmap-day-label">${l}</div>`).join('')}</div>
       <div class="heatmap-grid">${cells.join('')}</div>
@@ -2996,7 +3098,7 @@ function renderHeatmap() {
         <span>High</span>
         <span style="margin-left:8px;font-family:var(--font-mono);">Peak: ${fmtDef(maxDay)}</span>
       </div>
-    </div>`;
+    </div>`);
 }
 
 // ── 3. CATEGORY MONTH-TO-MONTH TREND ──
@@ -3014,7 +3116,7 @@ function renderCatTrend() {
   }).filter(s => s.vals.some(v => v > 0));
 
   if (!series.length) {
-    document.getElementById('chart-cattrend').innerHTML = `<div class="chart-title">Category Trends</div><div style="color:var(--ink-lighter);font-size:13px;padding:20px 0;">No expense data yet.</div>`;
+    document.getElementById('chart-cattrend').innerHTML = chartWrap('cattrend', 'Category Trends', 'Month-on-month · 6 months', '<div style="color:var(--ink-lighter);font-size:13px;padding:20px 0;">No expense data yet.</div>');
     return;
   }
 
@@ -3052,9 +3154,7 @@ function renderCatTrend() {
     </div>`
   ).join('');
 
-  document.getElementById('chart-cattrend').innerHTML = `
-    <div class="chart-title">Category Trends</div>
-    <div class="chart-subtitle">Month-on-month · 6 months</div>
+  document.getElementById('chart-cattrend').innerHTML = chartWrap('cattrend', 'Category Trends', 'Month-on-month · 6 months', `
     <div class="chart-card">
       <svg width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="overflow:visible;">
         <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+chartH}" stroke="var(--paper-darker)" stroke-width="1"/>
@@ -3062,7 +3162,7 @@ function renderCatTrend() {
         ${lines}${xLabels}
       </svg>
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">${legend}</div>
-    </div>`;
+    </div>`);
 }
 
 // ── 4. TOP SUBCATEGORIES ──
@@ -3086,14 +3186,12 @@ function renderTopSubcategories() {
 
   const sorted = Object.entries(subTotals).sort((a, b) => b[1].amount - a[1].amount).slice(0, 8);
   if (!sorted.length) {
-    document.getElementById('chart-topcat').innerHTML = `<div class="chart-title">Top Spending</div><div style="color:var(--ink-lighter);font-size:13px;padding:20px 0;">No expense data this month.</div>`;
+    document.getElementById('chart-topcat').innerHTML = chartWrap('topcat', 'Top Spending', 'By subcategory · this month', '<div style="color:var(--ink-lighter);font-size:13px;padding:20px 0;">No expense data this month.</div>');
     return;
   }
   const maxAmt = sorted[0][1].amount;
 
-  document.getElementById('chart-topcat').innerHTML = `
-    <div class="chart-title">Top Spending</div>
-    <div class="chart-subtitle">By subcategory · this month</div>
+  document.getElementById('chart-topcat').innerHTML = chartWrap('topcat', 'Top Spending', 'By subcategory · this month', `
     <div class="chart-card">
       ${sorted.map(([name, v], i) => `
         <div class="ranked-item">
@@ -3102,7 +3200,7 @@ function renderTopSubcategories() {
           <div class="ranked-bar-wrap"><div class="ranked-bar-fill" style="width:${(v.amount/maxAmt*100).toFixed(1)}%"></div></div>
           <div class="ranked-amount">${fmtNum(v.amount)}</div>
         </div>`).join('')}
-    </div>`;
+    </div>`);
 }
 
 // ── 5. DAY-OF-WEEK PATTERN ──
@@ -3140,16 +3238,14 @@ function renderDayOfWeek() {
   const totalDow = avgPerOccurrence.reduce((s, v) => s + v, 0);
   const heaviest = dayNames[avgPerOccurrence.indexOf(maxAvg)];
 
-  document.getElementById('chart-dow').innerHTML = `
-    <div class="chart-title">Spending by Day</div>
-    <div class="chart-subtitle">Average per occurrence · <span style="color:var(--warm-amber);">■</span> weekend</div>
+  document.getElementById('chart-dow').innerHTML = chartWrap('dow', 'Spending by Day', 'Average per occurrence', `
     <div class="chart-card">
       <div class="dow-grid">${bars}</div>
       <div style="font-size:11px;color:var(--ink-lighter);margin-top:8px;padding-top:8px;border-top:1px solid var(--paper-darker);">
         Heaviest day: <strong style="color:var(--ink);">${heaviest}</strong>
         ${totalDow > 0 ? ` · Weekend avg: <strong style="color:var(--warm-amber);">${fmtDef((avgPerOccurrence[0]+avgPerOccurrence[6])/2)}</strong>` : ''}
       </div>
-    </div>`;
+    </div>`);
 }
 
 // ── HELPERS ──
@@ -3247,7 +3343,7 @@ function clearDrill() {
 function renderSettings() {
   const def = data.settings.defaultCurrency;
   const theme = data.settings.theme || 'washi';
-  const themeNames = { washi: '🍵 Washi', forest: '🌲 Forest Ink', pokemon: '🎮 Pokémon' };
+  const themeNames = { washi: '🍵 Washi', forest: '🌲 Forest Ink', tide: '🌊 Tide' };
   const lastUpdated = data.settings.ratesUpdatedAt;
   const ratesAge = lastUpdated ? Math.floor((Date.now() - lastUpdated) / 86400000) : null;
   const ratesLabel = ratesAge === null ? 'Never updated' :
@@ -3339,85 +3435,12 @@ function setTheme(theme) {
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme === 'washi' ? '' : theme);
   const metaTheme = document.querySelector('meta[name=theme-color]');
-  const colors = { washi: '#f5f0e8', forest: '#1a2e1e', pokemon: '#fafafa' };
+  const colors = { washi: '#f5f0e8', forest: '#1a2e1e', tide: '#0d1f2d' };
   if (metaTheme) metaTheme.content = colors[theme] || '#f5f0e8';
-  // Toggle Pokémon click handler
-  if (theme === 'pokemon') {
-    document.body.addEventListener('click', pokemonClickHandler, true);
-  } else {
-    document.body.removeEventListener('click', pokemonClickHandler, true);
-  }
+
 }
 
-// ── POKÉMON CLICK BURST ──
-const POKEMON_SPRITES = ['🎮','⚡','🔥','💧','🌿','🌊','✨','💥','🎯','🎪','🌟','💫','🎵'];
-const POKEBALLS = ['🔴','⚪'];
 
-function pokemonClickHandler(e) {
-  // Don't fire on interactive elements
-  const tag = e.target.tagName;
-  if (['INPUT','SELECT','TEXTAREA','BUTTON','A'].includes(tag)) return;
-  spawnPokemonBurst(e.clientX, e.clientY);
-}
-
-function spawnPokemonBurst(x, y) {
-  const count = 6 + Math.floor(Math.random() * 4);
-  for (let i = 0; i < count; i++) {
-    const el = document.createElement('div');
-    const isPokeball = Math.random() < 0.35;
-    el.textContent = isPokeball
-      ? (Math.random() < 0.5 ? '🔴' : '⚪')
-      : POKEMON_SPRITES[Math.floor(Math.random() * POKEMON_SPRITES.length)];
-    const size = 16 + Math.floor(Math.random() * 18);
-    const angle = (i / count) * 360 + Math.random() * 30;
-    const dist = 40 + Math.random() * 60;
-    const dx = Math.cos(angle * Math.PI / 180) * dist;
-    const dy = Math.sin(angle * Math.PI / 180) * dist;
-    const rot = (Math.random() - 0.5) * 720;
-    Object.assign(el.style, {
-      position: 'fixed',
-      left: x + 'px',
-      top: y + 'px',
-      fontSize: size + 'px',
-      pointerEvents: 'none',
-      zIndex: '99999',
-      transform: 'translate(-50%,-50%)',
-      transition: 'none',
-      willChange: 'transform, opacity',
-      lineHeight: '1',
-    });
-    document.body.appendChild(el);
-    requestAnimationFrame(() => {
-      el.style.transition = `transform ${0.5 + Math.random()*0.3}s cubic-bezier(0.2,0.8,0.4,1), opacity ${0.4 + Math.random()*0.3}s ease ${0.25 + Math.random()*0.2}s`;
-      el.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) rotate(${rot}deg) scale(0.3)`;
-      el.style.opacity = '0';
-    });
-    setTimeout(() => el.remove(), 900);
-  }
-
-  // Pokéball ring ripple
-  const ring = document.createElement('div');
-  Object.assign(ring.style, {
-    position: 'fixed',
-    left: x + 'px',
-    top: y + 'px',
-    width: '10px',
-    height: '10px',
-    borderRadius: '50%',
-    border: '2px solid #cc0000',
-    pointerEvents: 'none',
-    zIndex: '99998',
-    transform: 'translate(-50%,-50%) scale(1)',
-    opacity: '0.8',
-    transition: 'transform 0.45s ease-out, opacity 0.45s ease-out',
-  });
-  document.body.appendChild(ring);
-  requestAnimationFrame(() => {
-    ring.style.transform = 'translate(-50%,-50%) scale(8)';
-    ring.style.opacity = '0';
-  });
-  setTimeout(() => ring.remove(), 500);
-}
 
 // ── CURRENCY MANAGER ──
 // ── LIVE RATE REFRESH ──
