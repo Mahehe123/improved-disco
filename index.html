@@ -708,8 +708,7 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
       <button class="atab" onclick="switchAnalyticsTab('balance',this)">Balance</button>
       <button class="atab" onclick="switchAnalyticsTab('year',this)">Year</button>
       <button class="atab" onclick="switchAnalyticsTab('categories',this)">Categories</button>
-      <button class="atab" onclick="switchAnalyticsTab('patterns',this)">Patterns</button>
-      <button class="atab" onclick="switchAnalyticsTab('sankey',this)">Flow</button>
+
       <button class="atab" onclick="switchAnalyticsTab('claims',this)">Claims</button>
     </div>
 
@@ -721,7 +720,7 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
     <div class="top-header">
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <div>
-          <h1>Charts</h1>
+          <h1>Insights</h1>
           <div class="subtitle" id="chartsMonthLabel"></div>
         </div>
         <div style="display:flex;gap:6px;">
@@ -756,8 +755,8 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
       Analytics
     </button>
     <button class="nav-item" onclick="switchPage('charts',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-      Charts
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      Insights
     </button>
     <button class="nav-item" onclick="switchPage('settings',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41M20 12h-2M6 12H4M12 20v-2M12 6V4"/></svg>
@@ -1840,8 +1839,7 @@ function renderAnalyticsContent() {
     case 'balance': el.innerHTML = renderBalanceTab(); setTimeout(drawBalanceChart, 50); break;
     case 'year': el.innerHTML = renderYearTab(); setTimeout(drawYearChart, 50); break;
     case 'categories': el.innerHTML = renderCategoriesTab(); break;
-    case 'patterns': el.innerHTML = renderPatternsTab(); setTimeout(drawSavingsRateChart, 50); break;
-    case 'sankey': el.innerHTML = renderSankeyTab(); setTimeout(drawSankeyDiagram, 50); break;
+
     case 'claims': el.innerHTML = renderClaimsTab(); break;
   }
 }
@@ -2574,11 +2572,6 @@ function renderCategoriesTab() {
 function renderPatternsTab() {
   const patterns = buildPatternCards();
   return `<div class="analytics-section">
-    <div class="section-title" style="margin-bottom:6px;">Savings Rate</div>
-    <div style="font-size:11px;color:var(--ink-lighter);margin-bottom:12px;">Monthly savings rate over the last 6 months</div>
-    <div class="card" style="padding:14px;margin-bottom:20px;">
-      <canvas id="savingsRateChart" height="160" style="width:100%;display:block;"></canvas>
-    </div>
     <div class="section-title" style="margin-bottom:10px;">Patterns &amp; Signals</div>
     ${patterns.length
       ? patterns.map(p => `<div class="pattern-card ${p.type}">
@@ -2590,136 +2583,13 @@ function renderPatternsTab() {
   </div>`;
 }
 
-function drawSavingsRateChart() {
-  const canvas = document.getElementById('savingsRateChart');
-  if (!canvas) return;
-
-  const [y, m] = analyticsMonth.split('-').map(Number);
-  const months = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(y, m - 1 - i);
-    months.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'));
-  }
-
-  const rates = months.map(ym => {
-    const s = monthSummary(ym);
-    if (s.income <= 0) return null;
-    return Math.round((s.net / s.income) * 100);
-  });
-
-  const labels = months.map(ym => {
-    const [,mo] = ym.split('-');
-    return new Date(2000, parseInt(mo) - 1).toLocaleString('en', { month: 'short' });
-  });
-
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = canvas.offsetWidth * dpr;
-  canvas.height = 160 * dpr;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  const W = canvas.offsetWidth, H = 160;
-  const pad = { t: 20, r: 16, b: 32, l: 44 };
-  const cW = W - pad.l - pad.r, cH = H - pad.t - pad.b;
-
-  const clrGreen  = cssVar('--warm-green');
-  const clrRed    = cssVar('--warm-red');
-  const clrGrid   = cssVar('--paper-darker');
-  const clrInkL   = cssVar('--ink-lighter');
-  const clrInk    = cssVar('--ink-light');
-
-  // Y scale: -50% to +100%, always show 0
-  const validRates = rates.filter(r => r !== null);
-  const minR = Math.min(0, ...validRates) - 10;
-  const maxR = Math.max(0, ...validRates) + 10;
-  const range = maxR - minR || 1;
-  const yOf = v => pad.t + cH - ((v - minR) / range * cH);
-  const xOf = i => pad.l + (i / (months.length - 1)) * cW;
-
-  // Grid lines at 0, 25, 50
-  ctx.strokeStyle = clrGrid; ctx.lineWidth = 1;
-  [-25, 0, 25, 50].forEach(v => {
-    if (v < minR || v > maxR) return;
-    const yy = yOf(v);
-    ctx.setLineDash(v === 0 ? [] : [3, 3]);
-    ctx.beginPath(); ctx.moveTo(pad.l, yy); ctx.lineTo(pad.l + cW, yy); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = v === 0 ? clrInk : clrInkL;
-    ctx.font = `9px ${cssVar('--font-mono') || 'monospace'}`;
-    ctx.textAlign = 'right';
-    ctx.fillText(v + '%', pad.l - 5, yy + 3);
-  });
-
-  // Zero line label
-  const zeroY = yOf(0);
-  ctx.strokeStyle = clrGrid; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(pad.l, zeroY); ctx.lineTo(pad.l + cW, zeroY); ctx.stroke();
-
-  // Area fill (green above 0, red below)
-  const points = rates.map((r, i) => r !== null ? { x: xOf(i), y: yOf(r) } : null);
-  const z0 = yOf(0);
-
-  // Green area (positive)
-  ctx.beginPath();
-  let started = false;
-  points.forEach((p, i) => {
-    if (!p) { started = false; return; }
-    const clampY = Math.min(p.y, z0);
-    if (!started) { ctx.moveTo(p.x, z0); ctx.lineTo(p.x, clampY); started = true; }
-    else ctx.lineTo(p.x, clampY);
-  });
-  ctx.lineTo(points.filter(Boolean).slice(-1)[0]?.x || pad.l, z0);
-  ctx.closePath();
-  const [gr, gg, gb] = [parseInt(clrGreen.slice(1,3)||'5a',16), parseInt(clrGreen.slice(3,5)||'7a',16), parseInt(clrGreen.slice(5,7)||'52',16)];
-  ctx.fillStyle = `rgba(${gr},${gg},${gb},0.15)`; ctx.fill();
-
-  // Red area (negative)
-  ctx.beginPath();
-  started = false;
-  points.forEach((p, i) => {
-    if (!p) { started = false; return; }
-    const clampY = Math.max(p.y, z0);
-    if (!started) { ctx.moveTo(p.x, z0); ctx.lineTo(p.x, clampY); started = true; }
-    else ctx.lineTo(p.x, clampY);
-  });
-  ctx.lineTo(points.filter(Boolean).slice(-1)[0]?.x || pad.l, z0);
-  ctx.closePath();
-  const [rr2, rg2, rb2] = [parseInt(clrRed.slice(1,3)||'c0',16), parseInt(clrRed.slice(3,5)||'67',16), parseInt(clrRed.slice(5,7)||'4a',16)];
-  ctx.fillStyle = `rgba(${rr2},${rg2},${rb2},0.12)`; ctx.fill();
-
-  // Line
-  ctx.beginPath(); ctx.lineWidth = 2.5; started = false;
-  points.forEach(p => {
-    if (!p) { started = false; return; }
-    if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-    else ctx.lineTo(p.x, p.y);
-  });
-  ctx.strokeStyle = clrGreen; ctx.stroke();
-
-  // Dots + rate labels
-  points.forEach((p, i) => {
-    if (!p) return;
-    const r = rates[i];
-    const clr = r >= 0 ? clrGreen : clrRed;
-    ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = clr; ctx.fill();
-    // Rate label above/below dot
-    ctx.fillStyle = clr;
-    ctx.font = `bold 10px ${cssVar('--font-mono') || 'monospace'}`;
-    ctx.textAlign = 'center';
-    const labelY = r >= 0 ? p.y - 8 : p.y + 16;
-    ctx.fillText(r + '%', p.x, labelY);
-    // Month label
-    ctx.fillStyle = clrInkL;
-    ctx.font = `9px ${cssVar('--font-body') || 'sans-serif'}`;
-    ctx.fillText(labels[i], p.x, H - 4);
-  });
-}
 
 // ── PATTERN CARDS ENGINE ──
 function buildPatternCards() {
   const cards = [];
   const today = new Date();
-  const [cy, cm] = analyticsMonth.split('-').map(Number);
+  const baseMonth = (typeof chartsMonth !== 'undefined') ? chartsMonth : analyticsMonth;
+  const [cy, cm] = baseMonth.split('-').map(Number);
 
   // Build last 6 months array
   const months = [];
@@ -2769,9 +2639,9 @@ function buildPatternCards() {
     }
   });
 
-  // ── 3. HIGHEST SPEND DAY OF WEEK ──
+  // ── 3. SPEND PATTERN BY DAY OF WEEK ──
   const allTxs = months.flatMap(ym => getMonthTxs(ym)).filter(t => t.type==='expense' && t.context==='personal');
-  if (allTxs.length >= 10) {
+  if (allTxs.length >= 6) {
     const dowTotals = [0,0,0,0,0,0,0];
     const dowCounts = [0,0,0,0,0,0,0];
     allTxs.forEach(t => {
@@ -2780,13 +2650,29 @@ function buildPatternCards() {
       dowCounts[dow]++;
     });
     const dowAvg = dowTotals.map((t,i) => dowCounts[i] > 0 ? t / dowCounts[i] : 0);
-    const overallAvg = dowAvg.filter(v=>v>0).reduce((a,b)=>a+b,0) / dowAvg.filter(v=>v>0).length;
+    const weekendAvg = ((dowAvg[0]||0) + (dowAvg[6]||0)) / ((dowCounts[0]>0?1:0)+(dowCounts[6]>0?1:0) || 1);
+    const weekdayAvgs = [1,2,3,4,5].map(i => dowAvg[i]).filter(v => v > 0);
+    const weekdayAvg = weekdayAvgs.length ? weekdayAvgs.reduce((a,b)=>a+b,0) / weekdayAvgs.length : 0;
     const maxDow = dowAvg.indexOf(Math.max(...dowAvg));
     const dowNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
     const maxAvg = dowAvg[maxDow];
-    if (maxAvg > overallAvg * 1.4 && dowCounts[maxDow] >= 3) {
-      cards.push({ type: 'neutral', icon: '📅',
-        text: `<strong>${dowNames[maxDow]}</strong> is your highest personal spend day — avg <strong>${fmtDef(maxAvg)}</strong> per occurrence, ${Math.round((maxAvg/overallAvg-1)*100)}% above your daily average.` });
+    const overallAvg = dowAvg.filter(v=>v>0).reduce((a,b)=>a+b,0) / (dowAvg.filter(v=>v>0).length || 1);
+    // Weekend vs weekday insight
+    if (weekendAvg > 0 && weekdayAvg > 0) {
+      const ratio = weekendAvg / weekdayAvg;
+      if (ratio >= 1.2) {
+        cards.push({ type: 'neutral', icon: '🗓️',
+          text: `Weekends cost more — avg <strong>${fmtDef(weekendAvg)}</strong>/day vs <strong>${fmtDef(weekdayAvg)}</strong> on weekdays (${Math.round((ratio-1)*100)}% higher). Heaviest day: <strong>${dowNames[maxDow]}</strong>.` });
+      } else if (weekdayAvg > weekendAvg * 1.2) {
+        cards.push({ type: 'neutral', icon: '🗓️',
+          text: `Weekdays drive more spending — avg <strong>${fmtDef(weekdayAvg)}</strong>/day vs <strong>${fmtDef(weekendAvg)}</strong> on weekends. Heaviest day: <strong>${dowNames[maxDow]}</strong>.` });
+      } else {
+        cards.push({ type: 'neutral', icon: '🗓️',
+          text: `Spending is fairly consistent across the week. Heaviest day: <strong>${dowNames[maxDow]}</strong> at avg <strong>${fmtDef(maxAvg)}</strong>.` });
+      }
+    } else if (maxAvg > 0) {
+      cards.push({ type: 'neutral', icon: '🗓️',
+        text: `Heaviest personal spend day: <strong>${dowNames[maxDow]}</strong> at avg <strong>${fmtDef(maxAvg)}</strong> per occurrence.` });
     }
   }
 
@@ -2841,12 +2727,6 @@ function buildPatternCards() {
   return cards.slice(0, 7);
 }
 
-// ── SANKEY TAB ──
-function renderSankeyTab() {
-  return `<div style="padding:0 20px 12px;"><div class="section-title">Money Flow</div></div>
-    <div class="sankey-wrap"><canvas id="sankeyCanvas" height="340"></canvas></div>`;
-}
-
 function drawSankeyDiagram() {
   const canvas = document.getElementById('sankeyCanvas');
   if (!canvas) return;
@@ -2859,7 +2739,8 @@ function drawSankeyDiagram() {
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
   const H = 340;
 
-  const txs = getMonthTxs(analyticsMonth);
+  const sankeyMonth = document.getElementById('chart-flow') ? chartsMonth : analyticsMonth;
+  const txs = getMonthTxs(sankeyMonth);
   if (!txs.length) {
     ctx.font = `13px ${cssVar('--font-body') || 'sans-serif'}`; ctx.fillStyle = cssVar('--ink-lighter'); ctx.textAlign = 'center';
     ctx.fillText('No data for this month', W/2, H/2); return;
@@ -3217,11 +3098,10 @@ function toggleChart(id) {
   // If expanding a canvas-based chart, redraw it after transition
   if (!isNowCollapsed) {
     setTimeout(() => {
-      if (id === 'savings')  renderSavingsRate();
       if (id === 'heatmap')  renderHeatmap();
       if (id === 'cattrend') renderCatTrend();
       if (id === 'topcat')   renderTopSubcategories();
-      if (id === 'dow')      renderDayOfWeek();
+      if (id === 'flow')     renderInsightFlow();
     }, 260);
   }
 }
@@ -3248,78 +3128,38 @@ function renderCharts() {
   document.getElementById('chartsMonthLabel').textContent = monthLabel(chartsMonth);
   const el = document.getElementById('chartsContent');
   if (!data.settings.collapsedCharts) data.settings.collapsedCharts = [];
-  // Render placeholder wrappers, then fill each chart
+  // Default-collapse these sections on first load
+  const defaultCollapsed = ['heatmap', 'cattrend', 'topcat', 'flow'];
+  defaultCollapsed.forEach(id => {
+    if (!data.settings.collapsedCharts.includes(id)) data.settings.collapsedCharts.push(id);
+  });
   el.innerHTML = `
-    <div id="chart-savings"></div>
+    <div id="chart-patterns"></div>
     <div id="chart-heatmap"></div>
     <div id="chart-cattrend"></div>
     <div id="chart-topcat"></div>
-    <div id="chart-dow"></div>
+    <div id="chart-flow"></div>
   `;
-  renderSavingsRate();
+  renderInsightPatterns();
   renderHeatmap();
   renderCatTrend();
   renderTopSubcategories();
-  renderDayOfWeek();
+  renderInsightFlow();
 }
 
-// ── 1. SAVINGS RATE ──
-function renderSavingsRate() {
-  const months = getLast6Months(chartsMonth);
-  const rates = months.map(ym => {
-    const s = monthSummary(ym);
-    return s.income > 0 ? (s.net / s.income * 100) : 0;
-  });
-  const cur = rates[rates.length - 1];
-  const prev = rates[rates.length - 2] || 0;
-  const trend = cur - prev;
-  const isPos = cur >= 0;
-
-  // Sparkline
-  const maxAbs = Math.max(...rates.map(Math.abs), 1);
-  const W = 260, H = 48;
-  const pts = rates.map((r, i) => {
-    const x = (i / (rates.length - 1)) * W;
-    const y = H / 2 - (r / maxAbs) * (H / 2 - 6);
-    return `${x},${y}`;
-  }).join(' ');
-
-  const sparkColor = isPos ? 'var(--warm-green)' : 'var(--warm-red)';
-
-  document.getElementById('chart-savings').innerHTML = chartWrap('savings', 'Savings Rate', 'Net ÷ Income · 6-month view', `
-    <div class="chart-card">
-      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;">
-        <div>
-          <div class="savings-rate-big ${isPos ? 'positive' : 'negative'}">${cur.toFixed(1)}%</div>
-          <div style="font-size:12px;color:var(--ink-lighter);margin-top:6px;">
-            ${trend >= 0 ? '▲' : '▼'} ${Math.abs(trend).toFixed(1)}% vs last month
-          </div>
-        </div>
-        <div class="sparkline-wrap" style="flex:1;">
-          <svg width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
-            <line x1="0" y1="${H/2}" x2="${W}" y2="${H/2}" stroke="var(--paper-darker)" stroke-width="1" stroke-dasharray="3,3"/>
-            <polyline points="${pts}" fill="none" stroke="${sparkColor}" stroke-width="2" stroke-linejoin="round"/>
-            ${rates.map((r, i) => {
-              const x = (i / (rates.length - 1)) * W;
-              const y = H / 2 - (r / maxAbs) * (H / 2 - 6);
-              return `<circle cx="${x}" cy="${y}" r="3" fill="${r >= 0 ? 'var(--warm-green)' : 'var(--warm-red)'}"/>`;
-            }).join('')}
-          </svg>
-          <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--ink-lighter);font-family:var(--font-mono);">
-            ${months.map(ym => `<span>${new Date(ym+'-01').toLocaleString('en',{month:'short'})}</span>`).join('')}
-          </div>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:14px;">
-        ${months.map((ym, i) => {
-          const r = rates[i];
-          return `<div style="text-align:center;">
-            <div style="font-family:var(--font-mono);font-size:11px;color:${r>=0?'var(--warm-green)':'var(--warm-red)'};">${r.toFixed(0)}%</div>
-            <div style="font-size:9px;color:var(--ink-lighter);">${new Date(ym+'-01').toLocaleString('en',{month:'short'})}</div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`);
+// ── 1. PATTERNS BLOCK (Insights tab) ──
+function renderInsightPatterns() {
+  const patterns = buildPatternCards();
+  const html = patterns.length
+    ? patterns.map(p => `<div class="pattern-card ${p.type}">
+        <div class="pattern-icon">${p.icon}</div>
+        <div class="pattern-text">${p.text}</div>
+      </div>`).join('')
+    : `<div class="pattern-card neutral"><div class="pattern-icon">🔍</div><div class="pattern-text">Not enough data yet — patterns appear after 2+ months of entries.</div></div>`;
+  document.getElementById('chart-patterns').innerHTML = `<div style="padding:0 20px 4px;">
+    <div class="chart-title" style="padding-top:4px;margin-bottom:12px;">Patterns &amp; Signals</div>
+    ${html}
+  </div>`;
 }
 
 // ── 2. SPENDING HEATMAP ──
@@ -3471,49 +3311,15 @@ function renderTopSubcategories() {
     </div>`);
 }
 
-// ── 5. DAY-OF-WEEK PATTERN ──
-function renderDayOfWeek() {
-  const [y, m] = chartsMonth.split('-').map(Number);
-  const dowTotals = [0, 0, 0, 0, 0, 0, 0]; // Sun–Sat
-  const dowCounts = [0, 0, 0, 0, 0, 0, 0];
-
-  getMonthTxs(chartsMonth).filter(t => t.type === 'expense').forEach(t => {
-    const dow = new Date(t.date + 'T00:00:00').getDay();
-    dowTotals[dow] += t.convertedAmount;
-    dowCounts[dow]++;
-  });
-
-  // Count occurrences of each day in this month
-  const daysInMonth = new Date(y, m, 0).getDate();
-  const occurrences = [0, 0, 0, 0, 0, 0, 0];
-  for (let d = 1; d <= daysInMonth; d++) {
-    occurrences[new Date(y, m - 1, d).getDay()]++;
+// ── 5. FLOW / SANKEY (Insights tab) ──
+function renderInsightFlow() {
+  document.getElementById('chart-flow').innerHTML = chartWrap('flow', 'Money Flow', 'Income → context → categories',
+    `<div class="sankey-wrap" style="padding:0;"><canvas id="sankeyCanvas" height="340"></canvas></div>`
+  );
+  // Only draw if expanded
+  if (!data.settings.collapsedCharts.includes('flow')) {
+    setTimeout(drawSankeyDiagram, 50);
   }
-  const avgPerOccurrence = dowTotals.map((t, i) => occurrences[i] > 0 ? t / occurrences[i] : 0);
-  const maxAvg = Math.max(...avgPerOccurrence, 1);
-  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-
-  const bars = avgPerOccurrence.map((avg, i) => {
-    const heightPct = avg / maxAvg * 100;
-    const isWeekend = i === 0 || i === 6;
-    return `<div class="dow-bar-wrap">
-      <div class="dow-amount">${avg > 0 ? fmtNum(avg) : ''}</div>
-      <div class="dow-bar" style="height:${heightPct}%;background:${isWeekend ? 'var(--warm-amber)' : 'var(--warm-red)'};"></div>
-      <div class="dow-label">${dayNames[i]}</div>
-    </div>`;
-  }).join('');
-
-  const totalDow = avgPerOccurrence.reduce((s, v) => s + v, 0);
-  const heaviest = dayNames[avgPerOccurrence.indexOf(maxAvg)];
-
-  document.getElementById('chart-dow').innerHTML = chartWrap('dow', 'Spending by Day', 'Average per occurrence', `
-    <div class="chart-card">
-      <div class="dow-grid">${bars}</div>
-      <div style="font-size:11px;color:var(--ink-lighter);margin-top:8px;padding-top:8px;border-top:1px solid var(--paper-darker);">
-        Heaviest day: <strong style="color:var(--ink);">${heaviest}</strong>
-        ${totalDow > 0 ? ` · Weekend avg: <strong style="color:var(--warm-amber);">${fmtDef((avgPerOccurrence[0]+avgPerOccurrence[6])/2)}</strong>` : ''}
-      </div>
-    </div>`);
 }
 
 // ── HELPERS ──
