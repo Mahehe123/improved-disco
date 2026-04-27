@@ -1221,10 +1221,13 @@ function cssVar(name) {
 }
 
 function fmtNum(amount) {
-  // Compact display for summary cards — strip currency code, keep 2 decimals
-  if (amount >= 100000) return (amount/1000).toFixed(0) + 'k';
-  if (amount >= 10000) return (amount/1000).toFixed(1) + 'k';
-  return amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const neg = amount < 0;
+  const abs = Math.abs(amount);
+  let str;
+  if (abs >= 100000) str = (abs / 1000).toFixed(0) + 'k';
+  else if (abs >= 10000) str = (abs / 1000).toFixed(1) + 'k';
+  else str = Math.round(abs).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return neg ? '−' + str : str;
 }
 
 function fmt(amount, currency) {
@@ -1354,7 +1357,7 @@ function renderTransactions() {
   document.getElementById('summaryIncome').textContent = fmtNum(inc);
   document.getElementById('summaryExpense').textContent = fmtNum(exp);
   const netEl = document.getElementById('summaryNet');
-  netEl.textContent = fmtNum(Math.abs(net));
+  netEl.textContent = fmtNum(net);
   netEl.className = 'value ' + (net >= 0 ? 'net-positive' : 'net-negative');
 
   const txs = getFilteredTxs(currentMonth);
@@ -3675,7 +3678,10 @@ function renderTransactionsDrilled() {
   const exp = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.convertedAmount,0);
   document.getElementById('summaryIncome').textContent = fmtNum(inc);
   document.getElementById('summaryExpense').textContent = fmtNum(exp);
-  document.getElementById('summaryNet').textContent = fmtNum(Math.abs(inc-exp));
+  const net2 = inc - exp;
+  const netEl2 = document.getElementById('summaryNet');
+  netEl2.textContent = fmtNum(net2);
+  netEl2.className = 'value ' + (net2 >= 0 ? 'net-positive' : 'net-negative');
 
   // Group and render
   const groups = {};
