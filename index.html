@@ -967,17 +967,7 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
       <div id="currencyList" style="margin-bottom:16px;"></div>
       <div class="divider"></div>
       <div style="margin-top:12px;">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Code (e.g. USD)</label>
-            <input type="text" class="form-input" id="newCurrencyCode" placeholder="USD" maxlength="4" style="text-transform:uppercase;">
-          </div>
-          <div class="form-group">
-            <label class="form-label" id="newCurrencyRateLabel">Rate to MYR</label>
-            <input type="number" class="form-input" id="newCurrencyRate" placeholder="4.70" step="0.0001">
-          </div>
-        </div>
-        <button class="btn-primary" onclick="addCurrency()">Add Currency</button>
+        <button class="btn-primary" onclick="openCurrencyPicker()" style="width:100%;">+ Add Currency</button>
       </div>
     </div>
   </div>
@@ -1085,6 +1075,32 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
     </div>
     <div class="modal-body">
       <div id="defaultCurrencyList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Currency Picker Modal -->
+<div class="modal-overlay" id="currencyPickerModal">
+  <div class="modal" style="max-height:88vh;display:flex;flex-direction:column;">
+    <div class="modal-handle"></div>
+    <div class="modal-header" style="flex-shrink:0;">
+      <h2>Add Currency</h2>
+      <button class="modal-close" onclick="closeModal('currencyPickerModal')">✕</button>
+    </div>
+    <div style="padding:12px 20px 0;flex-shrink:0;">
+      <input type="text" id="currencyPickerSearch" class="form-input" placeholder="Search code, name or country…" oninput="filterCurrencyPicker(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div class="modal-body" style="flex:1;overflow-y:auto;padding-top:10px;">
+      <div id="currencyPickerStatus" style="font-size:13px;color:var(--ink-lighter);text-align:center;padding:24px 0;display:none;"></div>
+      <div id="currencyPickerList"></div>
+    </div>
+    <div style="padding:12px 20px 16px;border-top:1px solid var(--paper-darker);flex-shrink:0;background:var(--paper);">
+      <div style="font-size:11px;color:var(--ink-lighter);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Custom code & rate</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" id="customCurrencyCode" class="form-input" placeholder="e.g. BRL" maxlength="4" style="width:80px;text-transform:uppercase;flex-shrink:0;">
+        <input type="number" id="customCurrencyRate" class="form-input" placeholder="Rate to MYR" step="0.0001" style="flex:1;">
+        <button onclick="addCustomCurrency()" style="padding:10px 14px;background:var(--ink);color:var(--paper);border:none;border-radius:var(--radius-sm);font-size:13px;cursor:pointer;flex-shrink:0;">Add</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3910,7 +3926,6 @@ async function refreshRates() {
 // ── CURRENCY MANAGER ──
 function renderCurrencyList() {
   const def = data.settings.defaultCurrency;
-  document.getElementById('newCurrencyRateLabel').textContent = `Rate to ${def}`;
   document.getElementById('currencyList').innerHTML = data.currencies.map(c => `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;background:var(--card-bg);border:1px solid var(--paper-darker);border-radius:8px;padding:10px 12px;">
       <div style="flex:1;font-size:13px;font-weight:500;">${c.code} ${c.code === def ? '<span style="font-size:10px;color:var(--sage);background:var(--sage-pale);padding:2px 6px;border-radius:8px;">default</span>' : ''}</div>
@@ -3932,6 +3947,129 @@ function addCurrency() {
   document.getElementById('newCurrencyCode').value = '';
   document.getElementById('newCurrencyRate').value = '';
   showToast(code + ' added');
+}
+
+// ── CURRENCY PICKER ──
+// Curated top-30 real-world currencies (no crypto, no obscure SDR/XDR units)
+const CURATED_CURRENCIES = [
+  { code: 'MYR', name: 'Malaysian Ringgit',       country: 'Malaysia' },
+  { code: 'SGD', name: 'Singapore Dollar',         country: 'Singapore' },
+  { code: 'USD', name: 'US Dollar',                country: 'United States' },
+  { code: 'EUR', name: 'Euro',                     country: 'European Union' },
+  { code: 'TWD', name: 'New Taiwan Dollar',        country: 'Taiwan' },
+  { code: 'CNY', name: 'Chinese Yuan',             country: 'China' },
+  { code: 'JPY', name: 'Japanese Yen',             country: 'Japan' },
+  { code: 'GBP', name: 'British Pound',            country: 'United Kingdom' },
+  { code: 'AUD', name: 'Australian Dollar',        country: 'Australia' },
+  { code: 'HKD', name: 'Hong Kong Dollar',         country: 'Hong Kong' },
+  { code: 'KRW', name: 'South Korean Won',         country: 'South Korea' },
+  { code: 'INR', name: 'Indian Rupee',             country: 'India' },
+  { code: 'THB', name: 'Thai Baht',                country: 'Thailand' },
+  { code: 'IDR', name: 'Indonesian Rupiah',        country: 'Indonesia' },
+  { code: 'PHP', name: 'Philippine Peso',          country: 'Philippines' },
+  { code: 'VND', name: 'Vietnamese Dong',          country: 'Vietnam' },
+  { code: 'CAD', name: 'Canadian Dollar',          country: 'Canada' },
+  { code: 'CHF', name: 'Swiss Franc',              country: 'Switzerland' },
+  { code: 'NZD', name: 'New Zealand Dollar',       country: 'New Zealand' },
+  { code: 'SEK', name: 'Swedish Krona',            country: 'Sweden' },
+  { code: 'NOK', name: 'Norwegian Krone',          country: 'Norway' },
+  { code: 'DKK', name: 'Danish Krone',             country: 'Denmark' },
+  { code: 'AED', name: 'UAE Dirham',               country: 'United Arab Emirates' },
+  { code: 'SAR', name: 'Saudi Riyal',              country: 'Saudi Arabia' },
+  { code: 'BDT', name: 'Bangladeshi Taka',         country: 'Bangladesh' },
+  { code: 'PKR', name: 'Pakistani Rupee',          country: 'Pakistan' },
+  { code: 'LKR', name: 'Sri Lankan Rupee',         country: 'Sri Lanka' },
+  { code: 'MMK', name: 'Myanmar Kyat',             country: 'Myanmar' },
+  { code: 'BND', name: 'Brunei Dollar',            country: 'Brunei' },
+  { code: 'KHR', name: 'Cambodian Riel',           country: 'Cambodia' },
+];
+
+function openCurrencyPicker() {
+  document.getElementById('currencyPickerSearch').value = '';
+  document.getElementById('currencyPickerStatus').style.display = 'none';
+  openModal('currencyPickerModal');
+  filterCurrencyPicker('');
+}
+
+function filterCurrencyPicker(query) {
+  const q = query.trim().toLowerCase();
+  const added = new Set(data.currencies.map(c => c.code));
+
+  const filtered = CURATED_CURRENCIES.filter(c => {
+    if (added.has(c.code)) return false;
+    if (!q) return true;
+    return (
+      c.code.toLowerCase().includes(q) ||
+      c.name.toLowerCase().includes(q) ||
+      c.country.toLowerCase().includes(q)
+    );
+  });
+
+  const status = document.getElementById('currencyPickerStatus');
+  const list = document.getElementById('currencyPickerList');
+
+  if (!filtered.length) {
+    status.textContent = q ? `No match for "${query}". You can add custom currencies via the manual entry below.` : 'All top currencies already added.';
+    status.style.display = 'block';
+    list.innerHTML = '';
+    return;
+  }
+
+  status.style.display = 'none';
+  list.innerHTML = filtered.map(c => `
+    <div onclick="pickCurrency('${c.code}')" style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--paper-darker);cursor:pointer;" onmouseenter="this.style.background='var(--paper-dark)'" onmouseleave="this.style.background=''">
+      <div style="width:46px;flex-shrink:0;font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--ink);">${c.code}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;color:var(--ink);">${c.name}</div>
+        <div style="font-size:11px;color:var(--ink-lighter);">${c.country}</div>
+      </div>
+      <div style="font-size:18px;color:var(--ink-lighter);flex-shrink:0;">›</div>
+    </div>`).join('');
+}
+
+async function addCustomCurrency() {
+  const code = document.getElementById('customCurrencyCode').value.trim().toUpperCase();
+  const rateVal = document.getElementById('customCurrencyRate').value;
+  const rate = parseFloat(rateVal);
+  if (!code || code.length < 2) { showToast('Enter a valid currency code'); return; }
+  if (isNaN(rate) || rate <= 0) { showToast('Enter a valid rate'); return; }
+  if (data.currencies.find(c => c.code === code)) { showToast(code + ' already added'); return; }
+  data.currencies.push({ code, rate });
+  save(); renderCurrencyList(); renderSettings();
+  document.getElementById('customCurrencyCode').value = '';
+  document.getElementById('customCurrencyRate').value = '';
+  closeModal('currencyPickerModal');
+  showToast(code + ' added');
+}
+
+async function pickCurrency(code) {
+  if (data.currencies.find(c => c.code === code)) { showToast('Already added'); return; }
+  closeModal('currencyPickerModal');
+  showToast('Adding ' + code + '…');
+
+  // Try to fetch its rate against default currency
+  const base = data.settings.defaultCurrency.toLowerCase();
+  const today = new Date().toISOString().split('T')[0];
+  let rate = 1;
+  try {
+    const urls = [
+      `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${today}/v1/currencies/${base}.json`,
+      `https://latest.currency-api.pages.dev/v1/currencies/${base}.json`
+    ];
+    let rateData = null;
+    for (const url of urls) {
+      try { const r = await fetch(url); if (r.ok) { rateData = await r.json(); break; } } catch(e) {}
+    }
+    if (rateData && rateData[base] && rateData[base][code.toLowerCase()] != null) {
+      const raw = rateData[base][code.toLowerCase()];
+      // raw = how many CODE per 1 BASE, so rate (CODE→BASE) = 1/raw
+      rate = raw > 0 ? parseFloat((1 / raw).toFixed(6)) : 1;
+    }
+  } catch(e) {}
+
+  data.currencies.push({ code, rate });
+  save(); renderCurrencyList(); renderSettings();
+  showToast(code + ' added (rate: ' + rate + ')');
 }
 
 function updateCurrencyRate(code, val) {
