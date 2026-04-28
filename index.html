@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 /* ══ THEME: WASHI (default) ══ */
 :root {
@@ -3172,7 +3173,10 @@ function renderClaimsTab() {
         // Breakdown header
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
           '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-lighter);font-weight:500;">Breakdown</div>' +
-          '<button onclick="exportClaimsCSV(\'' + fromStr + '\',\'' + toStr + '\')" style="padding:5px 12px;background:var(--ink);color:var(--paper);border:none;border-radius:6px;font-size:11px;font-family:var(--font-body);cursor:pointer;">↓ CSV</button>' +
+          '<div style="display:flex;gap:6px;">' +
+            '<button onclick="exportClaimsExcel(\'' + fromStr + '\',\'' + toStr + '\')" style="padding:5px 12px;background:var(--ink);color:var(--paper);border:none;border-radius:6px;font-size:11px;font-family:var(--font-body);cursor:pointer;" title="Export spreadsheet only">↓ Excel</button>' +
+            '<button onclick="exportClaimsZip(\'' + fromStr + '\',\'' + toStr + '\')" style="padding:5px 12px;background:var(--sage);color:var(--paper);border:none;border-radius:6px;font-size:11px;font-family:var(--font-body);cursor:pointer;" title="Export spreadsheet + receipt images as ZIP">↓ ZIP + Receipts</button>' +
+          '</div>' +
         '</div>' +
 
         // Category rows
@@ -3346,36 +3350,151 @@ function dismissAndLogClaim(cycleYm) {
   }, 100);
 }
 
-function exportClaimsCSV(fromDate, toDate) {
+// ── BUILD CLAIMS DATA ──
+function buildClaimsData(fromDate, toDate) {
+  const def = data.settings.defaultCurrency;
   const workExp = data.transactions.filter(t =>
     t.type === 'expense' && t.context === 'work' && t.claimable &&
     t.date >= fromDate && t.date <= toDate
   ).sort((a, b) => a.date.localeCompare(b.date));
+  return { workExp, def };
+}
 
-  if (!workExp.length) { showToast('No expenses to export'); return; }
+// ── HELPER: base64 data-uri → Uint8Array ──
+function dataUriToBytes(dataUri) {
+  const b64 = dataUri.split(',')[1];
+  const raw = atob(b64);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
 
-  const def = data.settings.defaultCurrency;
-  const headers = ['Date','Category','Subcategory','Amount','Currency',`Amount (${def})`,'Notes'];
-  const rows = workExp.map(t => {
+// ── HELPER: derive file extension from data-uri mime ──
+function receiptExt(dataUri) {
+  if (!dataUri) return '';
+  if (dataUri.startsWith('data:application/pdf')) return '.pdf';
+  return '.jpg'; // all images are saved as jpeg
+}
+
+// ── BUILD XLSX WORKBOOK ──
+function buildClaimsWorkbook(workExp, def, includeReceiptCol) {
+  const headers = ['#', 'Date', 'Category', 'Subcategory', 'Amount', 'Currency', `Amount (${def})`, 'Notes'];
+  if (includeReceiptCol) headers.push('Receipt File');
+
+  const rows = workExp.map((t, i) => {
     const cat = getCatById(t.categoryId);
-    return [
+    const row = [
+      i + 1,
       t.date,
       cat?.name || t.categoryId,
       t.subcategory || '',
       t.amount,
       t.currency,
-      t.convertedAmount.toFixed(2),
+      parseFloat(t.convertedAmount.toFixed(2)),
       t.notes || ''
-    ].map(v => '"' + String(v).replace(/"/g, '""') + '"');
+    ];
+    if (includeReceiptCol) {
+      if (t.receiptPhoto) {
+        const ext = receiptExt(t.receiptPhoto);
+        const label = String(i + 1).padStart(3, '0') + '_' + t.date + '_' + (t.subcategory || cat?.name || 'receipt').replace(/[^a-zA-Z0-9]/g, '_') + ext;
+        row.push(label);
+      } else {
+        row.push('');
+      }
+    }
+    return row;
   });
 
   const total = workExp.reduce((s, t) => s + t.convertedAmount, 0);
-  rows.push(['', '', '"TOTAL"', '', '', `"${total.toFixed(2)}"`, '']);
+  const totalRow = ['', '', '', 'TOTAL', '', '', parseFloat(total.toFixed(2)), ''];
+  if (includeReceiptCol) totalRow.push('');
+  rows.push(totalRow);
 
-  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-  const filename = `kira-claims-${fromDate}-to-${toDate}.csv`;
-  downloadFile(csv, filename, 'text/csv');
-  showToast('Claims report exported');
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+
+  // Column widths
+  ws['!cols'] = [
+    { wch: 4 },  // #
+    { wch: 12 }, // Date
+    { wch: 18 }, // Category
+    { wch: 20 }, // Subcategory
+    { wch: 12 }, // Amount
+    { wch: 8 },  // Currency
+    { wch: 14 }, // Amount (def)
+    { wch: 30 }, // Notes
+    ...(includeReceiptCol ? [{ wch: 40 }] : [])
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Claims');
+  return wb;
+}
+
+// ── EXPORT: Excel only ──
+function exportClaimsExcel(fromDate, toDate) {
+  const { workExp, def } = buildClaimsData(fromDate, toDate);
+  if (!workExp.length) { showToast('No expenses to export'); return; }
+
+  const wb = buildClaimsWorkbook(workExp, def, false);
+  const wbBytes = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbBytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `kira-claims-${fromDate}-to-${toDate}.xlsx`;
+  document.body.appendChild(a); a.click(); a.remove();
+  showToast('Claims Excel exported');
+}
+
+// ── EXPORT: ZIP (Excel + receipts folder) ──
+async function exportClaimsZip(fromDate, toDate) {
+  const { workExp, def } = buildClaimsData(fromDate, toDate);
+  if (!workExp.length) { showToast('No expenses to export'); return; }
+
+  showToast('Building ZIP…');
+
+  const wb = buildClaimsWorkbook(workExp, def, true);
+  const wbBytes = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+
+  const zip = new JSZip();
+  const excelName = `kira-claims-${fromDate}-to-${toDate}.xlsx`;
+  zip.file(excelName, new Uint8Array(wbBytes));
+
+  // Add receipts
+  const receiptsFolder = zip.folder('receipts');
+  let receiptCount = 0;
+  workExp.forEach((t, i) => {
+    if (!t.receiptPhoto) return;
+    const cat = getCatById(t.categoryId);
+    const ext = receiptExt(t.receiptPhoto);
+    const filename = String(i + 1).padStart(3, '0') + '_' + t.date + '_' + (t.subcategory || cat?.name || 'receipt').replace(/[^a-zA-Z0-9]/g, '_') + ext;
+    receiptsFolder.file(filename, dataUriToBytes(t.receiptPhoto));
+    receiptCount++;
+  });
+
+  // README
+  const noReceiptCount = workExp.length - receiptCount;
+  const readmeLines = [
+    'Kira Claims Export',
+    '==================',
+    `Period : ${fromDate} to ${toDate}`,
+    `Entries: ${workExp.length} (${receiptCount} with receipt, ${noReceiptCount} without)`,
+    `Exported: ${new Date().toLocaleString('en-MY')}`,
+    '',
+    'Files',
+    '-----',
+    `${excelName}  — Claims spreadsheet. The "Receipt File" column matches filenames in /receipts/.`,
+    `receipts/               — Folder of receipt images/PDFs named NNN_DATE_DESCRIPTION.`,
+    '',
+    receiptCount === 0 ? 'No receipts were attached to any entry in this period.' : ''
+  ].join('\n');
+  zip.file('README.txt', readmeLines);
+
+  const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `kira-claims-${fromDate}-to-${toDate}.zip`;
+  document.body.appendChild(a); a.click(); a.remove();
+  showToast(`ZIP exported — ${receiptCount} receipt${receiptCount !== 1 ? 's' : ''} bundled`);
 }
 
 // ════════════════════════════════════════════════════════════
