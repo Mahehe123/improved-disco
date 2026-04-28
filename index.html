@@ -759,10 +759,7 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
 
     <div class="analytics-tabs" id="analyticsTabs">
       <button class="atab active" onclick="switchAnalyticsTab('summary',this)">Summary</button>
-      <button class="atab" onclick="switchAnalyticsTab('balance',this)">Balance</button>
-      <button class="atab" onclick="switchAnalyticsTab('year',this)">Year</button>
-      <button class="atab" onclick="switchAnalyticsTab('categories',this)">Categories</button>
-
+      <button class="atab" onclick="switchAnalyticsTab('breakdown',this)">Breakdown</button>
       <button class="atab" onclick="switchAnalyticsTab('claims',this)">Claims</button>
     </div>
 
@@ -1990,12 +1987,9 @@ function renderAnalytics() {
 function renderAnalyticsContent() {
   const el = document.getElementById('analyticsContent');
   switch(currentAnalyticsTab) {
-    case 'summary': el.innerHTML = renderSummaryTab(); setTimeout(drawSummaryDailyChart, 50); break;
-    case 'balance': el.innerHTML = renderBalanceTab(); setTimeout(drawBalanceChart, 50); break;
-    case 'year': el.innerHTML = renderYearTab(); setTimeout(drawYearChart, 50); break;
-    case 'categories': el.innerHTML = renderCategoriesTab(); break;
-
-    case 'claims': el.innerHTML = renderClaimsTab(); break;
+    case 'summary':   el.innerHTML = renderSummaryTab(); setTimeout(() => { drawSummaryDailyChart(); drawBalanceChart(); }, 50); break;
+    case 'breakdown': el.innerHTML = renderBreakdownTab(); setTimeout(drawYearChart, 50); break;
+    case 'claims':    el.innerHTML = renderClaimsTab(); break;
   }
 }
 
@@ -2164,6 +2158,13 @@ function renderSummaryTab() {
         </div>
         <!-- Tooltip -->
         <div id="summaryChartTooltip" style="display:none;margin-top:10px;padding:8px 12px;background:var(--paper-dark);border-radius:var(--radius-sm);font-size:11px;border:1px solid var(--paper-darker);"></div>
+      </div>
+
+      <!-- Running balance chart -->
+      <div class="card" style="padding:14px;margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:2px;">Running Balance — 6 months</div>
+        <div style="font-size:10px;color:var(--ink-lighter);margin-bottom:10px;">Cumulative net (income − expenses)</div>
+        <canvas id="balanceChart" height="140" style="width:100%;display:block;"></canvas>
       </div>
 
       <!-- By Context -->
@@ -2413,21 +2414,15 @@ function summaryChartClick(event) {
       : `<div style="color:var(--ink-lighter);font-size:11px;">No expenses on this day</div>`);
 }
 // ── BALANCE TAB ──
-function renderBalanceTab() {
-  return `<div class="trend-canvas-wrap">
-    <div class="section-title" style="padding:0 0 12px;">Running Balance (6 months)</div>
-    <canvas id="balanceChart" height="220"></canvas>
-  </div>`;
-}
 
 function drawBalanceChart() {
   const canvas = document.getElementById('balanceChart');
   if (!canvas) return;
   canvas.width = canvas.offsetWidth * window.devicePixelRatio;
-  canvas.height = 220 * window.devicePixelRatio;
+  canvas.height = 140 * window.devicePixelRatio;
   const ctx = canvas.getContext('2d');
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-  const W = canvas.offsetWidth, H = 220;
+  const W = canvas.offsetWidth, H = 140;
 
   // Get last 6 months
   const months = [];
@@ -2499,16 +2494,37 @@ function drawBalanceChart() {
   });
 }
 
-// ── YEAR TAB ──
-function renderYearTab() {
+// ── BREAKDOWN TAB (Year + collapsible Categories) ──
+function renderBreakdownTab() {
   const year = analyticsMonth.slice(0, 4);
   return `<div class="analytics-section">
     <div class="section-title">${year} — Full Year</div>
     <canvas id="yearChart" height="200" style="width:100%;display:block;margin-bottom:20px;"></canvas>
     <div id="yearStats"></div>
-    <div id="yearTopCats" style="margin-top:16px;"></div>
+    <div id="yearTopCats" style="margin-top:16px;margin-bottom:24px;"></div>
+
+    <!-- Collapsible categories section -->
+    <div id="breakdownCatSection">
+      <button onclick="toggleBreakdownCats()" id="breakdownCatToggle"
+        style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--paper-dark);border:1px solid var(--paper-darker);border-radius:var(--radius-sm);font-size:13px;font-weight:500;font-family:var(--font-body);color:var(--ink);cursor:pointer;margin-bottom:0;">
+        <span>📂 This Month by Category</span>
+        <span id="breakdownCatChevron" style="font-size:11px;color:var(--ink-lighter);transition:transform 0.2s;">▼</span>
+      </button>
+      <div id="breakdownCatBody" style="display:none;margin-top:8px;">
+        ${renderCategoriesContent()}
+      </div>
+    </div>
   </div>`;
 }
+
+function toggleBreakdownCats() {
+  const body = document.getElementById('breakdownCatBody');
+  const chevron = document.getElementById('breakdownCatChevron');
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
 
 function drawYearChart() {
   const canvas = document.getElementById('yearChart');
@@ -2621,11 +2637,90 @@ function drawYearChart() {
     }).join('');
 }
 
-// ── CATEGORIES TAB ──
-// ── CATEGORIES TAB — with context pills + 3-month spike sparklines ──
+// ── CATEGORIES CONTENT (shared between breakdown collapsible and setCatContext refresh) ──
+function renderCategoriesContent() {
+  let txs = getMonthTxs(analyticsMonth).filter(t => t.type === 'expense');
+  if (catContextFilter !== 'total') txs = txs.filter(t => t.context === catContextFilter);
+
+  const pillsHTML = `<div class="ctx-pills" style="margin-bottom:12px;">
+    <button class="ctx-pill ${catContextFilter==='total'?'active':''}" onclick="setCatContext('total')">Total</button>
+    <button class="ctx-pill ${catContextFilter==='personal'?'active':''}" onclick="setCatContext('personal')">👤 Personal</button>
+    <button class="ctx-pill ${catContextFilter==='work'?'active':''}" onclick="setCatContext('work')">💼 Work</button>
+  </div>`;
+
+  if (!txs.length) return pillsHTML + `<div class="empty-state" style="padding:20px 0;"><div class="emoji">📊</div><p>No expense data for this period.</p></div>`;
+
+  const catTotals = {};
+  txs.forEach(t => {
+    if (!catTotals[t.categoryId]) catTotals[t.categoryId] = { total: 0, personal: 0, work: 0, subs: {} };
+    catTotals[t.categoryId].total += t.convertedAmount;
+    catTotals[t.categoryId][t.context] = (catTotals[t.categoryId][t.context] || 0) + t.convertedAmount;
+    if (t.subcategory) {
+      catTotals[t.categoryId].subs[t.subcategory] = (catTotals[t.categoryId].subs[t.subcategory] || 0) + t.convertedAmount;
+    }
+  });
+
+  const maxTotal = Math.max(...Object.values(catTotals).map(v => v.total));
+  const sorted = Object.entries(catTotals).sort((a, b) => b[1].total - a[1].total);
+
+  const rows = sorted.map(([cid, v]) => {
+    const cat = getCatById(cid);
+    if (!cat) return '';
+    const displayAmt = catContextFilter === 'total' ? v.total : catContextFilter === 'personal' ? (v.personal||0) : (v.work||0);
+    if (displayAmt === 0) return '';
+    const pct = (displayAmt / maxTotal * 100).toFixed(1);
+    const subs = Object.entries(v.subs).sort((a,b)=>b[1]-a[1]);
+
+    const spark = getCatSparkData(cid);
+    const [m1, m2, m3] = spark;
+    const isSpike = catContextFilter !== 'work' && m1 > 0 && m3 > m1 * 1.2 && (m3 - m1) > 50;
+    const sparkMax = Math.max(...spark, 1);
+    const spikePct = m1 > 0 ? Math.round((m3 - m1) / m1 * 100) : 0;
+    const sparkHTML = isSpike ? `
+      <div style="display:flex;align-items:center;gap:4px;margin-top:6px;">
+        <div class="sparkline-wrap">
+          ${spark.map((v,i) => {
+            const h = Math.max(3, Math.round(v / sparkMax * 22));
+            const isLast = i === 2;
+            return `<div class="spark-bar ${isLast && isSpike ? 'spike' : 'normal'}" style="height:${h}px;"></div>`;
+          }).join('')}
+        </div>
+        <span class="spike-badge">▲ ${spikePct}% vs 2 months ago</span>
+      </div>` : '';
+
+    return `<div style="margin-bottom:16px;cursor:pointer;border-radius:var(--radius-sm);padding:4px;transition:background 0.12s;" onclick="drillToCategory('${cid}','${analyticsMonth}')" onmouseenter="this.style.background='var(--paper-dark)'" onmouseleave="this.style.background=''">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div style="font-size:13px;font-weight:500;">${cat.emoji} ${cat.name}</div>
+        <div style="display:flex;align-items:center;gap:8px;"><div style="font-family:var(--font-mono);font-size:15px;">${fmtDef(displayAmt)}</div><span style="color:var(--ink-lighter);font-size:12px;">›</span></div>
+      </div>
+      <div class="bar-track" style="height:8px;margin-bottom:6px;"><div class="bar-fill expense" style="width:${pct}%"></div></div>
+      ${catContextFilter === 'total' ? `<div style="display:flex;gap:12px;font-size:11px;color:var(--ink-lighter);margin-bottom:4px;">
+        ${v.personal ? `<span>👤 ${fmtDef(v.personal)}</span>` : ''}
+        ${v.work ? `<span>💼 ${fmtDef(v.work)}</span>` : ''}
+      </div>` : ''}
+      ${sparkHTML}
+      ${subs.length ? `<div style="padding-left:12px;border-left:2px solid var(--paper-darker);margin-top:8px;">${subs.slice(0,5).map(([s,a]) => `
+        <div class="bar-row" style="margin-bottom:4px;">
+          <div class="bar-label" style="font-size:11px;width:90px;">${s}</div>
+          <div class="bar-track" style="height:5px;"><div class="bar-fill" style="width:${(a/displayAmt*100).toFixed(1)}%;background:var(--stone-light)"></div></div>
+          <div class="bar-value" style="font-size:11px;">${fmtDef(a)}</div>
+        </div>`).join('')}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+
+  return pillsHTML + `<div class="section-title" style="margin-bottom:10px;">Expense by Category</div>` + rows;
+}
+
 function setCatContext(ctx) {
   catContextFilter = ctx;
-  renderAnalyticsContent();
+  // If we're in the breakdown tab, refresh only the categories body so the section stays open
+  const body = document.getElementById('breakdownCatBody');
+  if (body) {
+    body.innerHTML = renderCategoriesContent();
+  } else {
+    renderAnalyticsContent();
+  }
 }
 
 function getCatSparkData(cid) {
@@ -2641,86 +2736,6 @@ function getCatSparkData(cid) {
     if (catContextFilter !== 'total') txs = txs.filter(t => t.context === catContextFilter);
     return txs.reduce((s, t) => s + t.convertedAmount, 0);
   });
-}
-
-function renderCategoriesTab() {
-  let txs = getMonthTxs(analyticsMonth).filter(t => t.type === 'expense');
-  if (catContextFilter !== 'total') txs = txs.filter(t => t.context === catContextFilter);
-  if (!txs.length) return `<div class="analytics-section">
-    <div class="ctx-pills">
-      <button class="ctx-pill ${catContextFilter==='total'?'active':''}" onclick="setCatContext('total')">Total</button>
-      <button class="ctx-pill ${catContextFilter==='personal'?'active':''}" onclick="setCatContext('personal')">👤 Personal</button>
-      <button class="ctx-pill ${catContextFilter==='work'?'active':''}" onclick="setCatContext('work')">💼 Work</button>
-    </div>
-    <div class="empty-state"><div class="emoji">📊</div><p>No expense data for this period.</p></div></div>`;
-
-  const catTotals = {};
-  txs.forEach(t => {
-    if (!catTotals[t.categoryId]) catTotals[t.categoryId] = { total: 0, personal: 0, work: 0, subs: {} };
-    catTotals[t.categoryId].total += t.convertedAmount;
-    catTotals[t.categoryId][t.context] = (catTotals[t.categoryId][t.context] || 0) + t.convertedAmount;
-    if (t.subcategory) {
-      catTotals[t.categoryId].subs[t.subcategory] = (catTotals[t.categoryId].subs[t.subcategory] || 0) + t.convertedAmount;
-    }
-  });
-
-  const maxTotal = Math.max(...Object.values(catTotals).map(v => v.total));
-  const sorted = Object.entries(catTotals).sort((a, b) => b[1].total - a[1].total);
-
-  return `<div class="analytics-section">
-    <div class="ctx-pills">
-      <button class="ctx-pill ${catContextFilter==='total'?'active':''}" onclick="setCatContext('total')">Total</button>
-      <button class="ctx-pill ${catContextFilter==='personal'?'active':''}" onclick="setCatContext('personal')">👤 Personal</button>
-      <button class="ctx-pill ${catContextFilter==='work'?'active':''}" onclick="setCatContext('work')">💼 Work</button>
-    </div>
-    <div class="section-title" style="margin-bottom:10px;">Expense by Category</div>
-    ${sorted.map(([cid, v]) => {
-      const cat = getCatById(cid);
-      if (!cat) return '';
-      const displayAmt = catContextFilter === 'total' ? v.total : catContextFilter === 'personal' ? (v.personal||0) : (v.work||0);
-      if (displayAmt === 0) return '';
-      const pct = (displayAmt / maxTotal * 100).toFixed(1);
-      const subs = Object.entries(v.subs).sort((a,b)=>b[1]-a[1]);
-
-      // Sparkline: only show if spiking (month3 > month1 by >20% and >RM50, personal only)
-      const spark = getCatSparkData(cid);
-      const [m1, m2, m3] = spark;
-      const isSpike = catContextFilter !== 'work' && m1 > 0 && m3 > m1 * 1.2 && (m3 - m1) > 50;
-      const sparkMax = Math.max(...spark, 1);
-      const spikePct = m1 > 0 ? Math.round((m3 - m1) / m1 * 100) : 0;
-      const sparkHTML = isSpike ? `
-        <div style="display:flex;align-items:center;gap:4px;margin-top:6px;">
-          <div class="sparkline-wrap">
-            ${spark.map((v,i) => {
-              const h = Math.max(3, Math.round(v / sparkMax * 22));
-              const isLast = i === 2;
-              return `<div class="spark-bar ${isLast && isSpike ? 'spike' : 'normal'}" style="height:${h}px;"></div>`;
-            }).join('')}
-          </div>
-          <span class="spike-badge">▲ ${spikePct}% vs 2 months ago</span>
-        </div>` : '';
-
-      return `<div style="margin-bottom:16px;cursor:pointer;border-radius:var(--radius-sm);padding:4px;transition:background 0.12s;" onclick="drillToCategory('${cid}','${analyticsMonth}')" onmouseenter="this.style.background='var(--paper-dark)'" onmouseleave="this.style.background=''">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-          <div style="font-size:13px;font-weight:500;">${cat.emoji} ${cat.name}</div>
-          <div style="display:flex;align-items:center;gap:8px;"><div style="font-family:var(--font-mono);font-size:15px;">${fmtDef(displayAmt)}</div><span style="color:var(--ink-lighter);font-size:12px;">›</span></div>
-        </div>
-        <div class="bar-track" style="height:8px;margin-bottom:6px;"><div class="bar-fill expense" style="width:${pct}%"></div></div>
-        ${catContextFilter === 'total' ? `<div style="display:flex;gap:12px;font-size:11px;color:var(--ink-lighter);margin-bottom:4px;">
-          ${v.personal ? `<span>👤 ${fmtDef(v.personal)}</span>` : ''}
-          ${v.work ? `<span>💼 ${fmtDef(v.work)}</span>` : ''}
-        </div>` : ''}
-        ${sparkHTML}
-        ${subs.length ? `<div style="padding-left:12px;border-left:2px solid var(--paper-darker);margin-top:8px;">${subs.slice(0,5).map(([s,a]) => `
-          <div class="bar-row" style="margin-bottom:4px;">
-            <div class="bar-label" style="font-size:11px;width:90px;">${s}</div>
-            <div class="bar-track" style="height:5px;"><div class="bar-fill" style="width:${(a/displayAmt*100).toFixed(1)}%;background:var(--stone-light)"></div></div>
-            <div class="bar-value" style="font-size:11px;">${fmtDef(a)}</div>
-          </div>`).join('')}
-        </div>` : ''}
-      </div>`;
-    }).join('')}
-  </div>`;
 }
 
 // ── PATTERNS TAB ──
