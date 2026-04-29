@@ -10,8 +10,8 @@
 <link rel="manifest" href="#" id="manifest-link">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
 <style>
 /* ══ THEME: WASHI (default) ══ */
 :root {
@@ -662,9 +662,65 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 0; }
+/* ══ PHASE 2 UTILITY CLASSES ══ */
+.skip-link{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:-1;}
+.skip-link:focus{position:fixed;left:12px;top:12px;width:auto;height:auto;overflow:visible;z-index:10000;background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:var(--radius-sm);font-size:14px;text-decoration:none;}
+.header-row{display:flex;align-items:center;justify-content:space-between;}
+.header-currency{font-size:11px;color:var(--ink-lighter);text-align:right;}
+.header-actions{display:flex;align-items:center;gap:8px;}
+.search-btn{background:none;border:none;cursor:pointer;color:var(--ink-lighter);padding:4px;display:flex;align-items:center;transition:color 0.15s;}
+.search-bar-wrap{display:none;padding:8px 0 4px;}
+.search-bar-wrap.open{display:block;}
+.search-bar-inner{display:flex;align-items:center;gap:8px;background:var(--card-bg);border:1.5px solid var(--sage);border-radius:var(--radius-sm);padding:8px 12px;}
+.search-bar-input{border:none;outline:none;background:transparent;flex:1;font-size:14px;font-family:var(--font-body);color:var(--ink);}
+.search-bar-icon{color:var(--ink-lighter);flex-shrink:0;}
+.upcoming-divider{margin:12px 0 4px;padding:6px 0;border-top:1px dashed var(--paper-darker);display:flex;align-items:center;gap:8px;}
+.upcoming-label{font-size:10px;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-lighter);font-weight:500;}
+.kpi-strip{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+.kpi-card{text-align:center;padding:12px 8px;}
+.kpi-label{font-size:9px;color:var(--ink-lighter);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;}
+.kpi-value{font-family:var(--font-mono);font-size:14px;font-weight:500;}
+.kpi-value.income{color:var(--warm-green);}
+.kpi-value.expense{color:var(--warm-red);}
+.search-count{padding:0 20px 8px;font-size:11px;color:var(--ink-lighter);}
+.breakdown-toggle-btn{width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--paper-dark);border:1px solid var(--paper-darker);border-radius:var(--radius-sm);font-size:13px;font-weight:500;font-family:var(--font-body);color:var(--ink);cursor:pointer;margin-bottom:0;}
+.breakdown-toggle-chevron{font-size:11px;color:var(--ink-lighter);transition:transform 0.2s;}
+.subcat-row-inner{display:flex;align-items:center;gap:8px;background:var(--card-bg);border:1px solid var(--paper-darker);border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:default;transition:opacity 0.15s,box-shadow 0.15s,border-color 0.15s;}
+.import-preview-table{background:var(--card-bg);border:1px solid var(--paper-darker);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:12px;}
+.import-preview-header{padding:10px 14px;background:var(--paper-dark);font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-lighter);}
+.import-preview-row{display:grid;grid-template-columns:80px 1fr 1fr auto;gap:8px;padding:8px 14px;border-bottom:1px solid var(--paper-darker);font-size:12px;align-items:center;}
+.import-preview-date{color:var(--ink-lighter);}
+.import-warn-box{background:var(--warm-amber-pale);border:1px solid var(--warm-amber);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;font-size:12px;}
+.claim-log-btn{width:100%;padding:13px;background:var(--ink);color:var(--paper);border:none;border-radius:var(--radius-sm);font-size:14px;font-family:var(--font-body);font-weight:500;cursor:pointer;margin-bottom:14px;letter-spacing:0.02em;}
+.claim-entry-card{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--warm-green-pale);border:1px solid var(--warm-green);border-radius:var(--radius-sm);margin-bottom:6px;cursor:pointer;}
+.claim-entry-name{font-size:12px;font-weight:500;color:var(--warm-green);}
+.claim-entry-date{font-size:11px;color:var(--ink-lighter);margin-top:2px;}
+.claim-entry-right{display:flex;align-items:center;gap:8px;}
+.claim-entry-amount{font-family:var(--font-mono);font-size:14px;color:var(--warm-green);}
+.settings-footer{text-align:center;padding:24px 20px;font-size:11px;color:var(--ink-lighter);}
+.currency-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;background:var(--card-bg);border:1px solid var(--paper-darker);border-radius:8px;padding:10px 12px;}
+.currency-row-code{flex:1;font-size:13px;font-weight:500;}
+.currency-row-rate{font-size:12px;color:var(--ink-light);}
+.currency-rate-input{width:70px;padding:5px 8px;border:1px solid var(--paper-darker);border-radius:6px;font-size:12px;}
+.currency-default-badge{font-size:10px;color:var(--sage);background:var(--sage-pale);padding:2px 6px;border-radius:8px;}
+.currency-picker-item{display:flex;align-items:center;gap:10px;padding:11px 20px;border-bottom:1px solid var(--paper-darker);cursor:pointer;}
+.currency-picker-item:hover{background:var(--paper-dark);}
+.currency-picker-code{width:46px;flex-shrink:0;font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--ink);}
+.currency-picker-info{flex:1;min-width:0;}
+.currency-picker-name{font-size:13px;color:var(--ink);}
+.currency-picker-country{font-size:11px;color:var(--ink-lighter);}
+.currency-picker-arrow{font-size:18px;color:var(--ink-lighter);flex-shrink:0;}
+.cpicker-footer{padding:12px 20px 16px;border-top:1px solid var(--paper-darker);flex-shrink:0;background:var(--paper);}
+.cpicker-footer-label{font-size:11px;color:var(--ink-lighter);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;}
+.cpicker-footer-row{display:flex;gap:8px;align-items:center;}
+.cpicker-add-btn{padding:10px 14px;background:var(--ink);color:var(--paper);border:none;border-radius:var(--radius-sm);font-size:13px;cursor:pointer;flex-shrink:0;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+
 </style>
 </head>
 <body>
+<a href="#page-transactions" class="skip-link">Skip to main content</a>
+<div role="status" aria-live="polite" aria-atomic="true" id="a11y-announcer" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;"></div>
 <div id="app">
 
   <!-- ── RECURRING SUGGESTION BANNER ── -->
@@ -677,28 +733,27 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
   </div>
 
   <!-- ════════════════════════════════ TRANSACTIONS PAGE ════════════════════════════════ -->
-  <div id="page-transactions" class="page active">
+  <main id="page-transactions" class="page active" role="main" aria-label="Transactions">
     <div class="top-header">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div class="header-row">
         <div>
           <h1>Kira</h1>
           <div class="subtitle">Personal Finance</div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div style="font-size:11px;color:var(--ink-lighter);text-align:right;"><div id="headerCurrency"></div></div>
-          <button onclick="toggleSearch()" id="searchBtn" style="background:none;border:none;cursor:pointer;color:var(--ink-lighter);padding:4px;display:flex;align-items:center;transition:color 0.15s;" title="Search">
+        <div class="header-actions">
+          <div class="header-currency"><div id="headerCurrency"></div></div>
+          <button onclick="toggleSearch()" id="searchBtn" style="background:none;border:none;cursor:pointer;color:var(--ink-lighter);padding:4px;display:flex;align-items:center;transition:color 0.15s;" aria-label="Toggle search" aria-expanded="false" aria-controls="searchBar">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
           </button>
         </div>
       </div>
       <!-- Search bar (hidden by default) -->
-      <div id="searchBar" style="display:none;padding:8px 0 4px;animation:fadeIn 0.15s ease;">
-        <div style="display:flex;align-items:center;gap:8px;background:var(--card-bg);border:1.5px solid var(--sage);border-radius:var(--radius-sm);padding:8px 12px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--ink-lighter);flex-shrink:0;"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-          <input type="text" id="searchInput" placeholder="Search transactions..." autocomplete="off" autocorrect="off"
-            oninput="onSearchInput(this.value)"
-            style="border:none;outline:none;background:transparent;flex:1;font-size:14px;font-family:var(--font-body);color:var(--ink);">
-          <button onclick="clearSearch()" style="background:none;border:none;cursor:pointer;color:var(--ink-lighter);padding:0;font-size:16px;line-height:1;">✕</button>
+      <div id="searchBar" class="search-bar-wrap" role="search">
+        <div class="search-bar-inner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="search-bar-icon" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" id="searchInput" class="search-bar-input" placeholder="Search transactions..." autocomplete="off" autocorrect="off" aria-label="Search transactions"
+            oninput="onSearchInput(this.value)">
+          <button onclick="clearSearch()" class="search-btn" aria-label="Clear search">✕</button>
         </div>
       </div>
     </div>
@@ -706,12 +761,12 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
     <div id="searchResults" style="display:none;"></div>
 
     <div class="month-nav" id="monthNavBar">
-      <button onclick="changeMonth(-1)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg>
+      <button onclick="changeMonth(-1)" aria-label="Previous month">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <div class="month-label" id="currentMonthLabel"></div>
-      <button onclick="changeMonth(1)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg>
+      <div class="month-label" id="currentMonthLabel" aria-live="polite" aria-atomic="true"></div>
+      <button onclick="changeMonth(1)" aria-label="Next month">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
       </button>
     </div>
 
@@ -730,56 +785,56 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
       </div>
     </div>
 
-    <div class="filter-bar">
-      <div class="filter-chip active" onclick="setFilter('all',this)">All</div>
-      <div class="filter-chip" onclick="setFilter('income',this)">Income</div>
-      <div class="filter-chip" onclick="setFilter('expense',this)">Expense</div>
-      <div class="filter-chip" onclick="setFilter('personal',this)">Personal</div>
-      <div class="filter-chip" onclick="setFilter('work',this)">Work</div>
+    <div class="filter-bar" role="group" aria-label="Filter transactions">
+      <button class="filter-chip active" onclick="setFilter('all',this)" aria-pressed="true">All</button>
+      <button class="filter-chip" onclick="setFilter('income',this)" aria-pressed="false">Income</button>
+      <button class="filter-chip" onclick="setFilter('expense',this)" aria-pressed="false">Expense</button>
+      <button class="filter-chip" onclick="setFilter('personal',this)" aria-pressed="false">Personal</button>
+      <button class="filter-chip" onclick="setFilter('work',this)" aria-pressed="false">Work</button>
     </div>
 
     <div id="txList"></div>
   </div>
 
   <!-- ════════════════════════════════ ANALYTICS PAGE ════════════════════════════════ -->
-  <div id="page-analytics" class="page">
+  <main id="page-analytics" class="page" role="main" aria-label="Analytics">
     <div class="top-header">
       <h1>Analytics</h1>
     </div>
 
     <div class="month-nav">
-      <button onclick="changeAnalyticsMonth(-1)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg>
+      <button onclick="changeAnalyticsMonth(-1)" aria-label="Previous month">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <div class="month-label" id="analyticsMonthLabel"></div>
-      <button onclick="changeAnalyticsMonth(1)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg>
+      <div class="month-label" id="analyticsMonthLabel" aria-live="polite" aria-atomic="true"></div>
+      <button onclick="changeAnalyticsMonth(1)" aria-label="Next month">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
       </button>
     </div>
 
-    <div class="analytics-tabs" id="analyticsTabs">
-      <button class="atab active" onclick="switchAnalyticsTab('summary',this)">Summary</button>
-      <button class="atab" onclick="switchAnalyticsTab('breakdown',this)">Breakdown</button>
-      <button class="atab" onclick="switchAnalyticsTab('claims',this)">Claims</button>
+    <div class="analytics-tabs" id="analyticsTabs" role="tablist" aria-label="Analytics sections">
+      <button class="atab active" onclick="switchAnalyticsTab('summary',this)" role="tab" aria-selected="true">Summary</button>
+      <button class="atab" onclick="switchAnalyticsTab('breakdown',this)" role="tab" aria-selected="false">Breakdown</button>
+      <button class="atab" onclick="switchAnalyticsTab('claims',this)" role="tab" aria-selected="false">Claims</button>
     </div>
 
-    <div id="analyticsContent"></div>
+    <div id="analyticsContent" role="tabpanel" aria-live="polite"></div>
   </div>
 
   <!-- ════════════════════════════════ CHARTS PAGE ════════════════════════════════ -->
-  <div id="page-charts" class="page">
+  <main id="page-charts" class="page" role="main" aria-label="Insights">
     <div class="top-header">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div class="header-row">
         <div>
           <h1>Insights</h1>
           <div class="subtitle" id="chartsMonthLabel"></div>
         </div>
         <div style="display:flex;gap:6px;">
-          <button onclick="changeChartsMonth(-1)" style="background:none;border:1px solid var(--paper-darker);border-radius:6px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          <button onclick="changeChartsMonth(-1)" class="chart-month-btn" aria-label="Previous month">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <button onclick="changeChartsMonth(1)" style="background:none;border:1px solid var(--paper-darker);border-radius:6px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          <button onclick="changeChartsMonth(1)" class="chart-month-btn" aria-label="Next month">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
           </button>
         </div>
       </div>
@@ -788,7 +843,7 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
   </div>
 
   <!-- ════════════════════════════════ SETTINGS PAGE ════════════════════════════════ -->
-  <div id="page-settings" class="page">
+  <main id="page-settings" class="page" role="main" aria-label="Settings">
     <div class="top-header">
       <h1>Settings</h1>
     </div>
@@ -797,27 +852,27 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
 
   <!-- ════════════════════════════════ BOTTOM NAV ════════════════════════════════ -->
   <nav class="bottom-nav">
-    <button class="nav-item active" onclick="switchPage('transactions',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    <button class="nav-item active" onclick="switchPage('transactions',this)" aria-label="Entries" aria-current="page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
       Entries
     </button>
-    <button class="nav-item" onclick="switchPage('analytics',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+    <button class="nav-item" onclick="switchPage('analytics',this)" aria-label="Analytics">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
       Analytics
     </button>
-    <button class="nav-item" onclick="switchPage('charts',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+    <button class="nav-item" onclick="switchPage('charts',this)" aria-label="Insights">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
       Insights
     </button>
-    <button class="nav-item" onclick="switchPage('settings',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41M20 12h-2M6 12H4M12 20v-2M12 6V4"/></svg>
+    <button class="nav-item" onclick="switchPage('settings',this)" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41M20 12h-2M6 12H4M12 20v-2M12 6V4"/></svg>
       Settings
     </button>
   </nav>
 
   <!-- FAB -->
-  <button class="fab" onclick="openAddTransaction()" id="mainFab">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+  <button class="fab" onclick="openAddTransaction()" id="mainFab" aria-label="Add new transaction">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
   </button>
 </div>
 
@@ -829,7 +884,7 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
     <div class="modal-handle"></div>
     <div class="modal-header">
       <h2 id="txModalTitle">New Entry</h2>
-      <button class="modal-close" onclick="closeTxModal()">✕</button>
+      <button class="modal-close" onclick="closeTxModal()" aria-label="Close">✕</button>
     </div>
     <div class="modal-body">
       <!-- Type Toggle -->
@@ -842,35 +897,35 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
       </div>
       <!-- Date -->
       <div class="form-group">
-        <label class="form-label">Date</label>
+        <label class="form-label" for="txDate">Date</label>
         <input type="date" class="form-input" id="txDate">
       </div>
       <!-- Category / Subcategory -->
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Category</label>
+          <label class="form-label" for="txCategory">Category</label>
           <select class="form-select" id="txCategory" onchange="populateSubcategories()"></select>
         </div>
         <div class="form-group">
-          <label class="form-label">Subcategory</label>
+          <label class="form-label" for="txSubcategory">Subcategory</label>
           <select class="form-select" id="txSubcategory"></select>
         </div>
       </div>
       <!-- Amount + Currency -->
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Amount</label>
+          <label class="form-label" for="txAmount">Amount</label>
           <input type="number" class="form-input" id="txAmount" placeholder="0.00" step="0.01" min="0">
         </div>
         <div class="form-group">
-          <label class="form-label">Currency</label>
+          <label class="form-label" for="txCurrency">Currency</label>
           <select class="form-select" id="txCurrency" onchange="updateFxNote()"></select>
         </div>
       </div>
       <div id="fxNote" class="fx-note" style="margin-top:-8px;margin-bottom:12px;"></div>
       <!-- Payment Context -->
       <div class="form-group">
-        <label class="form-label">Payment Context</label>
+        <div class="form-label" id="ctx-label">Payment Context</div>
         <div class="toggle-row">
           <button class="toggle-btn active personal" onclick="setContext('personal',this)" id="ctxPersonal">Personal</button>
           <button class="toggle-btn work" onclick="setContext('work',this)" id="ctxWork">Work</button>
@@ -878,12 +933,12 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
       </div>
       <!-- Claimable (Work only) -->
       <div class="form-group" id="claimableGroup" style="display:none;">
-        <div style="background:var(--warm-amber-pale);border:1px solid var(--warm-amber);border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:15px;">🧾</span>
+        <div class="claimable-box">
+          <div class="claimable-box-left">
+            <span style="font-size:15px;" aria-hidden="true">🧾</span>
             <span style="font-size:12px;color:var(--ink-light);">Auto-marked as claimable</span>
           </div>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--ink-lighter);">
+          <label class="claimable-override-label" for="txClaimable">
             <input type="checkbox" id="txClaimable" style="accent-color:var(--warm-amber);">
             override off
           </label>
@@ -891,7 +946,7 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
       </div>
       <!-- Claim month (Income + Claims category) -->
       <div class="form-group" id="claimMonthGroup" style="display:none;">
-        <label class="form-label">Claim Cycle</label>
+        <label class="form-label" for="txClaimMonth">Claim Cycle</label>
         <select class="form-select" id="txClaimMonth" onchange="updateClaimMonthLabel()">
         </select>
         <div id="txClaimMonthLabel" style="font-size:11px;color:var(--ink-lighter);margin-top:5px;"></div>
@@ -903,7 +958,7 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
           <label for="txRecurring">Recurring (auto-suggest monthly)</label>
         </label>
         <div id="recurringMonthsGroup" style="display:none;margin-top:10px;">
-          <label class="form-label" style="margin-bottom:6px;">How many months?</label>
+          <label class="form-label" for="txRecurringMonths" style="margin-bottom:6px;">How many months?</label>
           <div style="display:flex;align-items:center;gap:10px;">
             <input type="number" class="form-input" id="txRecurringMonths" min="1" max="60" value="12" style="width:90px;text-align:center;">
             <span style="font-size:13px;color:var(--ink-light);">months from entry date</span>
@@ -917,15 +972,15 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
       </button>
       <div class="more-fields" id="moreFields">
         <div class="form-group">
-          <label class="form-label">Tags (comma-separated)</label>
+          <label class="form-label" for="txTags">Tags (comma-separated)</label>
           <input type="text" class="form-input" id="txTags" placeholder="e.g. CNY, business trip">
         </div>
         <div class="form-group">
-          <label class="form-label">Notes</label>
+          <label class="form-label" for="txNotes">Notes</label>
           <textarea class="form-textarea" id="txNotes" rows="2" placeholder="Optional note..."></textarea>
         </div>
         <div class="form-group">
-          <label class="form-label">Receipt / Photo memo</label>
+          <div class="form-label">Receipt / Photo memo</div>
           <div id="receiptPreview" style="display:none;position:relative;margin-bottom:8px;">
             <img id="receiptImg" src="" style="width:100%;max-height:160px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--paper-darker);">
             <button onclick="clearReceipt()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.5);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">✕</button>
@@ -959,7 +1014,7 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
     <div class="modal-handle"></div>
     <div class="modal-header">
       <h2>Currencies & Rates</h2>
-      <button class="modal-close" onclick="closeModal('currencyModal')">✕</button>
+      <button class="modal-close" onclick="closeModal(\'currencyModal\')" aria-label="Close">✕</button>
     </div>
     <div class="modal-body">
       <div id="currencyList" style="margin-bottom:16px;"></div>
@@ -977,7 +1032,7 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
     <div class="modal-handle"></div>
     <div class="modal-header">
       <h2 id="catModalTitle">Manage Categories</h2>
-      <button class="modal-close" onclick="closeModal('catModal')">✕</button>
+      <button class="modal-close" onclick="closeModal(\'catModal\')" aria-label="Close">✕</button>
     </div>
     <div class="modal-body">
       <div id="catList" style="margin-bottom:16px;"></div>
@@ -1005,7 +1060,7 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
     <div class="modal-handle"></div>
     <div class="modal-header">
       <h2 id="subcatModalTitle">Subcategories</h2>
-      <button class="modal-close" onclick="closeModal('subcatModal')">✕</button>
+      <button class="modal-close" onclick="closeModal(\'subcatModal\')" aria-label="Close">✕</button>
     </div>
     <div class="modal-body">
       <div id="subcatList" style="margin-bottom:16px;"></div>
@@ -1027,7 +1082,7 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
     <div class="modal-handle"></div>
     <div class="modal-header">
       <h2>Import CSV</h2>
-      <button class="modal-close" onclick="closeModal('importModal')">✕</button>
+      <button class="modal-close" onclick="closeModal(\'importModal\')" aria-label="Close">✕</button>
     </div>
     <div class="modal-body">
       <div id="importStep1">
@@ -1069,7 +1124,7 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
     <div class="modal-handle"></div>
     <div class="modal-header">
       <h2>Default Currency</h2>
-      <button class="modal-close" onclick="closeModal('defaultCurrencyModal')">✕</button>
+      <button class="modal-close" onclick="closeModal(\'defaultCurrencyModal\')" aria-label="Close">✕</button>
     </div>
     <div class="modal-body">
       <div id="defaultCurrencyList"></div>
@@ -1083,7 +1138,7 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
     <div class="modal-handle"></div>
     <div class="modal-header" style="flex-shrink:0;">
       <h2>Add Currency</h2>
-      <button class="modal-close" onclick="closeModal('currencyPickerModal')">✕</button>
+      <button class="modal-close" onclick="closeModal(\'currencyPickerModal\')" aria-label="Close">✕</button>
     </div>
     <div style="padding:12px 20px 0;flex-shrink:0;">
       <input type="text" id="currencyPickerSearch" class="form-input" placeholder="Search code, name or country…" oninput="filterCurrencyPicker(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
@@ -1092,12 +1147,12 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
       <div id="currencyPickerStatus" style="font-size:13px;color:var(--ink-lighter);text-align:center;padding:24px 0;display:none;"></div>
       <div id="currencyPickerList"></div>
     </div>
-    <div style="padding:12px 20px 16px;border-top:1px solid var(--paper-darker);flex-shrink:0;background:var(--paper);">
-      <div style="font-size:11px;color:var(--ink-lighter);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Custom code & rate</div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="text" id="customCurrencyCode" class="form-input" placeholder="e.g. BRL" maxlength="4" style="width:80px;text-transform:uppercase;flex-shrink:0;">
-        <input type="number" id="customCurrencyRate" class="form-input" placeholder="Rate to MYR" step="0.0001" style="flex:1;">
-        <button onclick="addCustomCurrency()" style="padding:10px 14px;background:var(--ink);color:var(--paper);border:none;border-radius:var(--radius-sm);font-size:13px;cursor:pointer;flex-shrink:0;">Add</button>
+    <div class="cpicker-footer">
+      <div class="cpicker-footer-label">Custom code &amp; rate</div>
+      <div class="cpicker-footer-row">
+        <input type="text" id="customCurrencyCode" class="form-input" placeholder="e.g. BRL" maxlength="4" style="width:80px;text-transform:uppercase;flex-shrink:0;" aria-label="Currency code">
+        <input type="number" id="customCurrencyRate" class="form-input" placeholder="Rate to MYR" step="0.0001" style="flex:1;" aria-label="Exchange rate">
+        <button onclick="addCustomCurrency()" class="cpicker-add-btn" aria-label="Add custom currency">Add</button>
       </div>
     </div>
   </div>
@@ -1511,7 +1566,7 @@ function renderSearchResults(query) {
   }).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 50);
 
   if (!results.length) {
-    el.innerHTML = '<div style="padding:30px;text-align:center;"><div style="font-size:28px;margin-bottom:8px;">🔍</div><div style="color:var(--ink-lighter);font-size:13px;">No results for "' + query + '"</div></div>';
+    el.innerHTML = '<div class="search-empty"><div style="font-size:28px;margin-bottom:8px;" aria-hidden="true">🔍</div><div>No results for "' + query + '"</div></div>';
     return;
   }
 
@@ -1521,7 +1576,7 @@ function renderSearchResults(query) {
     groups[t.date].push(t);
   });
 
-  el.innerHTML = `<div style="padding:0 20px 8px;font-size:11px;color:var(--ink-lighter);">${results.length} result${results.length!==1?'s':''}</div>` +
+  el.innerHTML = `<div class="search-count" role="status" aria-live="polite">${results.length} result${results.length!==1?'s':''}</div>` +
     Object.entries(groups).sort((a,b) => b[0].localeCompare(a[0])).map(([date, items]) => {
       const d = new Date(date + 'T00:00:00');
       const label = d.toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -1531,8 +1586,9 @@ function renderSearchResults(query) {
 
 function setFilter(f, el) {
   txFilter = f;
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.filter-chip').forEach(c => { c.classList.remove('active'); c.setAttribute('aria-pressed','false'); });
   el.classList.add('active');
+  el.setAttribute('aria-pressed','true');
   renderTransactions();
 }
 
@@ -1924,7 +1980,7 @@ function checkRecurringSuggestions() {
     return `<div class="recurring-item" id="ri_${t.id}">
       <div class="recurring-item-info">
         ${cat ? cat.emoji : ''} ${cat ? cat.name : ''}${t.subcategory ? ' · ' + t.subcategory : ''}
-        <br><span style="font-size:11px;color:var(--ink-lighter)">${t.context === 'work' ? '💼 Work' : '👤 Personal'}</span>
+        <br><span class="recurring-context">${t.context === 'work' ? '💼 Work' : '👤 Personal'}</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <div class="recurring-item-amount">${fmtDef(t.convertedAmount)}</div>
@@ -1974,8 +2030,9 @@ function skipRecurring(origId) {
 
 function switchAnalyticsTab(tab, btn) {
   currentAnalyticsTab = tab;
-  document.querySelectorAll('.atab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.atab').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
   btn.classList.add('active');
+  btn.setAttribute('aria-selected','true');
   renderAnalyticsContent();
 }
 
@@ -2119,18 +2176,18 @@ function renderSummaryTab() {
     <div class="analytics-section">
 
       <!-- KPI strip -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
-        <div class="card" style="text-align:center;padding:12px 8px;">
-          <div style="font-size:9px;color:var(--ink-lighter);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Income</div>
-          <div style="font-family:var(--font-mono);font-size:14px;color:var(--warm-green);font-weight:500;">${fmtDef(s.income).replace(/[A-Z]+\s?/,'')}</div>
+      <div class="kpi-strip">
+        <div class="card kpi-card">
+          <div class="kpi-label">Income</div>
+          <div class="kpi-value income">${fmtDef(s.income).replace(/[A-Z]+\s?/,'')}</div>
         </div>
-        <div class="card" style="text-align:center;padding:12px 8px;">
-          <div style="font-size:9px;color:var(--ink-lighter);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Expenses</div>
-          <div style="font-family:var(--font-mono);font-size:14px;color:var(--warm-red);font-weight:500;">${fmtDef(s.expense).replace(/[A-Z]+\s?/,'')}</div>
+        <div class="card kpi-card">
+          <div class="kpi-label">Expenses</div>
+          <div class="kpi-value expense">${fmtDef(s.expense).replace(/[A-Z]+\s?/,'')}</div>
         </div>
-        <div class="card" style="text-align:center;padding:12px 8px;">
-          <div style="font-size:9px;color:var(--ink-lighter);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Net</div>
-          <div style="font-family:var(--font-mono);font-size:14px;font-weight:500;" class="${s.net>=0?'net-positive':'net-negative'}">${fmtDef(s.net).replace(/[A-Z]+\s?/,'')}</div>
+        <div class="card kpi-card">
+          <div class="kpi-label">Net</div>
+          <div class="kpi-value ${s.net>=0?'net-positive':'net-negative'}">${fmtDef(s.net).replace(/[A-Z]+\s?/,'')}</div>
         </div>
       </div>
 
@@ -2505,10 +2562,9 @@ function renderBreakdownTab() {
 
     <!-- Collapsible categories section -->
     <div id="breakdownCatSection">
-      <button onclick="toggleBreakdownCats()" id="breakdownCatToggle"
-        style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--paper-dark);border:1px solid var(--paper-darker);border-radius:var(--radius-sm);font-size:13px;font-weight:500;font-family:var(--font-body);color:var(--ink);cursor:pointer;margin-bottom:0;">
+      <button onclick="toggleBreakdownCats()" id="breakdownCatToggle" class="breakdown-toggle-btn" aria-expanded="false" aria-controls="breakdownCatBody">
         <span>📂 This Month by Category</span>
-        <span id="breakdownCatChevron" style="font-size:11px;color:var(--ink-lighter);transition:transform 0.2s;">▼</span>
+        <span id="breakdownCatChevron" class="breakdown-toggle-chevron">▼</span>
       </button>
       <div id="breakdownCatBody" style="display:none;margin-top:8px;">
         ${renderCategoriesContent()}
@@ -2520,9 +2576,11 @@ function renderBreakdownTab() {
 function toggleBreakdownCats() {
   const body = document.getElementById('breakdownCatBody');
   const chevron = document.getElementById('breakdownCatChevron');
+  const btn = document.getElementById('breakdownCatToggle');
   const isOpen = body.style.display !== 'none';
   body.style.display = isOpen ? 'none' : 'block';
   chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+  if (btn) btn.setAttribute('aria-expanded', String(!isOpen));
 }
 
 
@@ -3161,7 +3219,7 @@ function renderClaimsTab() {
       :
         // Log Claim Button
         (status !== 'settled'
-          ? '<button onclick="openLogClaimIncome(\'' + cycleYm + '\')" style="width:100%;padding:13px;background:var(--ink);color:var(--paper);border:none;border-radius:var(--radius-sm);font-size:14px;font-family:var(--font-body);font-weight:500;cursor:pointer;margin-bottom:14px;letter-spacing:0.02em;">' +
+          ? '<button onclick="openLogClaimIncome(\'' + cycleYm + '\')" class="claim-log-btn">' +
               (claimed > 0 ? '+ Log Additional Claim' : '+ Log Claim Reimbursement') +
             '</button>'
           : '') +
@@ -3171,14 +3229,14 @@ function renderClaimsTab() {
           ? '<div style="margin-bottom:14px;">' +
               '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-lighter);font-weight:500;margin-bottom:8px;">Claim Entries</div>' +
               claimsIncTxs.map(t =>
-                '<div onclick="editTxFromClaims(\'' + t.id + '\')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--warm-green-pale);border:1px solid var(--warm-green);border-radius:var(--radius-sm);margin-bottom:6px;cursor:pointer;">' +
+                '<div onclick="editTxFromClaims(\'' + t.id + '\')" class="claim-entry-card">' +
                   '<div>' +
-                    '<div style="font-size:12px;font-weight:500;color:var(--warm-green);">💼 ' + (t.subcategory || 'Work Claims') + '</div>' +
-                    '<div style="font-size:11px;color:var(--ink-lighter);margin-top:2px;">' + new Date(t.date + 'T00:00:00').toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' }) + '</div>' +
+                    '<div class="claim-entry-name">💼 ' + (t.subcategory || 'Work Claims') + '</div>' +
+                    '<div class="claim-entry-date">' + new Date(t.date + 'T00:00:00').toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' }) + '</div>' +
                   '</div>' +
-                  '<div style="display:flex;align-items:center;gap:8px;">' +
-                    '<div style="font-family:var(--font-mono);font-size:14px;color:var(--warm-green);">+' + fmtAmt(t.convertedAmount) + '</div>' +
-                    '<span style="font-size:10px;color:var(--ink-lighter);">✏️</span>' +
+                  '<div class="claim-entry-right">' +
+                    '<div class="claim-entry-amount">+' + fmtAmt(t.convertedAmount) + '</div>' +
+                    '<span aria-hidden="true">✏️</span>' +
                   '</div>' +
                 '</div>'
               ).join('') +
@@ -3966,7 +4024,7 @@ function renderSettings() {
         <span class="settings-item-arrow" style="color:var(--warm-red)">›</span>
       </div>
     </div>
-    <div style="text-align:center;padding:24px 20px;font-size:11px;color:var(--ink-lighter);">
+    <div class="settings-footer">
       Kira · All data stored locally on your device only
     </div>`;
 }
@@ -4061,12 +4119,12 @@ async function refreshRates() {
 function renderCurrencyList() {
   const def = data.settings.defaultCurrency;
   document.getElementById('currencyList').innerHTML = data.currencies.map(c => `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;background:var(--card-bg);border:1px solid var(--paper-darker);border-radius:8px;padding:10px 12px;">
-      <div style="flex:1;font-size:13px;font-weight:500;">${c.code} ${c.code === def ? '<span style="font-size:10px;color:var(--sage);background:var(--sage-pale);padding:2px 6px;border-radius:8px;">default</span>' : ''}</div>
-      <div style="font-size:12px;color:var(--ink-light);">1 ${c.code} = ${c.rate} ${def}</div>
+    <div class="currency-row">
+      <div class="currency-row-code">${c.code} ${c.code === def ? '<span class="currency-default-badge">default</span>' : ''}</div>
+      <div class="currency-row-rate">1 ${c.code} = ${c.rate} ${def}</div>
       ${c.code !== def ? `
-        <input type="number" value="${c.rate}" step="0.0001" style="width:70px;padding:5px 8px;border:1px solid var(--paper-darker);border-radius:6px;font-size:12px;" onchange="updateCurrencyRate('${c.code}',this.value)">
-        <button class="icon-btn" onclick="removeCurrency('${c.code}')" style="color:var(--warm-red);">✕</button>
+        <input type="number" value="${c.rate}" step="0.0001" class="currency-rate-input" aria-label="Rate for ${c.code}" onchange="updateCurrencyRate('${c.code}',this.value)">
+        <button class="icon-btn" onclick="removeCurrency('${c.code}')" style="color:var(--warm-red);" aria-label="Remove ${c.code}">✕</button>
       ` : ''}
     </div>`).join('');
 }
@@ -4151,13 +4209,13 @@ function filterCurrencyPicker(query) {
 
   status.style.display = 'none';
   list.innerHTML = filtered.map(c => `
-    <div onclick="pickCurrency('${c.code}')" style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--paper-darker);cursor:pointer;" onmouseenter="this.style.background='var(--paper-dark)'" onmouseleave="this.style.background=''">
-      <div style="width:46px;flex-shrink:0;font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--ink);">${c.code}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;color:var(--ink);">${c.name}</div>
-        <div style="font-size:11px;color:var(--ink-lighter);">${c.country}</div>
+    <div onclick="pickCurrency('${c.code}')" class="currency-picker-item" role="button" tabindex="0" aria-label="Add ${c.name}">
+      <div class="currency-picker-code">${c.code}</div>
+      <div class="currency-picker-info">
+        <div class="currency-picker-name">${c.name}</div>
+        <div class="currency-picker-country">${c.country}</div>
       </div>
-      <div style="font-size:18px;color:var(--ink-lighter);flex-shrink:0;">›</div>
+      <div class="currency-picker-arrow" aria-hidden="true">›</div>
     </div>`).join('');
 }
 
@@ -4325,9 +4383,8 @@ function renderSubcatList() {
   if (!cat) return;
   const list = document.getElementById('subcatList');
   list.innerHTML = cat.subs.map((s, i) => `
-    <div class="subcat-row" data-index="${i}" draggable="true"
-      style="display:flex;align-items:center;gap:8px;background:var(--card-bg);border:1px solid var(--paper-darker);border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:default;transition:opacity 0.15s,box-shadow 0.15s,border-color 0.15s;">
-      <span class="subcat-drag-handle" style="font-size:15px;color:var(--ink-lighter);cursor:grab;touch-action:none;user-select:none;padding:0 2px;">☰</span>
+    <div class="subcat-row" data-index="${i}" draggable="true">
+      <span class="subcat-drag-handle" aria-hidden="true">☰</span>
       <span style="font-size:13px;flex:1;">${s}</span>
       <div style="display:flex;align-items:center;gap:2px;">
         <button class="icon-btn" onclick="moveSubcat(${i},-1)" title="Move up"
@@ -4666,11 +4723,11 @@ function previewCSV() {
   // Show preview table
   const unmatched = [...new Set(csvParsed.filter(r => !r.matchedCat).map(r => r.catRaw))];
   const previewHTML = `
-    <div style="background:var(--card-bg);border:1px solid var(--paper-darker);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:12px;">
-      <div style="padding:10px 14px;background:var(--paper-dark);font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-lighter);">Preview (first 4 rows)</div>
+    <div class="import-preview-table">
+      <div class="import-preview-header">Preview (first 4 rows)</div>
       ${csvParsed.slice(0,4).map(r => `
-        <div style="display:grid;grid-template-columns:80px 1fr 1fr auto;gap:8px;padding:8px 14px;border-bottom:1px solid var(--paper-darker);font-size:12px;align-items:center;">
-          <div style="color:var(--ink-lighter);">${r.date}</div>
+        <div class="import-preview-row">
+          <div class="import-preview-date">${r.date}</div>
           <div>${r.catRaw || '—'} ${r.subRaw ? '<span style="color:var(--ink-lighter)">· '+r.subRaw+'</span>' : ''}</div>
           <div style="font-size:11px;color:${r.context==='work'?'var(--warm-amber)':'var(--sage)'};">${r.context==='work'?'💼 Work':'👤 Personal'}</div>
           <div style="font-family:var(--font-mono);font-size:13px;color:${r.type==='income'?'var(--warm-green)':'var(--warm-red)'};">${r.type==='income'?'+':'−'}${r.convertedAmount.toFixed(2)}</div>
