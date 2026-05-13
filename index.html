@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 /* ══ THEME: WASHI (default) ══ */
 :root {
@@ -249,6 +250,13 @@ html, body {
   font-family: var(--font-body);
 }
 .filter-chip.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.range-chip {
+  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;
+  background: var(--paper-dark); color: var(--ink-lighter); cursor: pointer;
+  border: 1px solid transparent; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+  font-family: var(--font-mono);
+}
+.range-chip.active { background: var(--sage-pale, #e8f0ec); color: var(--sage); border-color: var(--sage); }
 
 /* ── TRANSACTION LIST ── */
 .tx-section { padding: 0 20px; margin-bottom: 12px; }
@@ -735,6 +743,13 @@ canvas { width: 100%; border-radius: var(--radius-sm); }
       <div class="filter-chip" onclick="setFilter('expense',this)">Expense</div>
       <div class="filter-chip" onclick="setFilter('personal',this)">Personal</div>
       <div class="filter-chip" onclick="setFilter('work',this)">Work</div>
+    </div>
+    <div class="filter-bar" style="padding-top:0;gap:6px;" id="rangeBar">
+      <div class="range-chip active" onclick="setDateRange('month',this)">Month</div>
+      <div class="range-chip" onclick="setDateRange('3m',this)">3M</div>
+      <div class="range-chip" onclick="setDateRange('6m',this)">6M</div>
+      <div class="range-chip" onclick="setDateRange('year',this)">Year</div>
+      <div class="range-chip" onclick="setDateRange('all',this)">All</div>
     </div>
 
     <div id="txList"></div>
@@ -1307,6 +1322,7 @@ let currentMonth = new Date().toISOString().slice(0, 7);
 let analyticsMonth = currentMonth;
 let chartsMonth = currentMonth;
 let txFilter = 'all';
+let txDateRange = 'month'; // 'month' | '3m' | '6m' | 'year' | 'all'
 let editingTxId = null;
 let currentTxType = 'income';
 let currentTxContext = 'personal';
@@ -1371,12 +1387,29 @@ function getMonthTxs(ym) {
   return data.transactions.filter(t => t.date.startsWith(ym));
 }
 
+function getDateRangeTxs() {
+  // Returns all transactions matching the current date range (used when txDateRange !== 'month')
+  const today = new Date();
+  let fromDate;
+  if (txDateRange === '3m') {
+    fromDate = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+  } else if (txDateRange === '6m') {
+    fromDate = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+  } else if (txDateRange === 'year') {
+    fromDate = new Date(today.getFullYear(), 0, 1);
+  } else { // 'all'
+    fromDate = new Date(0);
+  }
+  const fromStr = fromDate.toISOString().slice(0, 10);
+  return data.transactions.filter(t => t.date >= fromStr);
+}
+
 function getFilteredTxs(ym) {
-  let txs = getMonthTxs(ym);
-  if (txFilter === 'income') txs = txs.filter(t => t.type === 'income');
-  else if (txFilter === 'expense') txs = txs.filter(t => t.type === 'expense');
+  let txs = txDateRange === 'month' ? getMonthTxs(ym) : getDateRangeTxs();
+  if (txFilter === 'income')   txs = txs.filter(t => t.type === 'income');
+  else if (txFilter === 'expense')  txs = txs.filter(t => t.type === 'expense');
   else if (txFilter === 'personal') txs = txs.filter(t => t.context === 'personal');
-  else if (txFilter === 'work') txs = txs.filter(t => t.context === 'work');
+  else if (txFilter === 'work')     txs = txs.filter(t => t.context === 'work');
   return txs.sort((a, b) => b.date.localeCompare(a.date));
 }
 
@@ -1435,25 +1468,33 @@ function changeAnalyticsMonth(dir) {
 // ════════════════════════════════════════════════════════════
 
 function renderTransactions() {
-  document.getElementById('currentMonthLabel').textContent = monthLabel(currentMonth);
+  const isRangeMode = txDateRange !== 'month';
+
+  // Month nav — hide in range mode
+  const monthNav = document.getElementById('monthNavBar');
+  if (monthNav) monthNav.style.display = isRangeMode ? 'none' : '';
+
+  if (!isRangeMode) {
+    document.getElementById('currentMonthLabel').textContent = monthLabel(currentMonth);
+  }
   document.getElementById('headerCurrency').textContent = data.settings.defaultCurrency;
 
-  // Filter-aware summary cards
-  const allTxs = getMonthTxs(currentMonth);
-  let filteredForSummary = allTxs;
+  // Summary — always uses current filtered set
+  const txs = getFilteredTxs(currentMonth);
+  let filteredForSummary = isRangeMode ? txs : getMonthTxs(currentMonth);
   let incomeLabel = 'Income', expenseLabel = 'Expenses', netLabel = 'Net';
 
   if (txFilter === 'income') {
-    filteredForSummary = allTxs.filter(t => t.type === 'income');
+    filteredForSummary = filteredForSummary.filter(t => t.type === 'income');
     incomeLabel = 'Income'; expenseLabel = '—'; netLabel = 'Total';
   } else if (txFilter === 'expense') {
-    filteredForSummary = allTxs.filter(t => t.type === 'expense');
+    filteredForSummary = filteredForSummary.filter(t => t.type === 'expense');
     incomeLabel = '—'; expenseLabel = 'Expenses'; netLabel = 'Total';
   } else if (txFilter === 'personal') {
-    filteredForSummary = allTxs.filter(t => t.context === 'personal');
+    filteredForSummary = filteredForSummary.filter(t => t.context === 'personal');
     incomeLabel = 'P. Income'; expenseLabel = 'P. Expense'; netLabel = 'P. Net';
   } else if (txFilter === 'work') {
-    filteredForSummary = allTxs.filter(t => t.context === 'work');
+    filteredForSummary = filteredForSummary.filter(t => t.context === 'work');
     incomeLabel = 'W. Income'; expenseLabel = 'W. Expense'; netLabel = 'W. Net';
   }
 
@@ -1470,11 +1511,10 @@ function renderTransactions() {
   netEl.textContent = fmtNum(net);
   netEl.className = 'value ' + (net >= 0 ? 'net-positive' : 'net-negative');
 
-  const txs = getFilteredTxs(currentMonth);
   const list = document.getElementById('txList');
 
   if (txs.length === 0) {
-    list.innerHTML = `<div class="empty-state"><div class="emoji">📭</div><p>No entries for ${monthLabel(currentMonth)}.<br>Tap + to add your first entry.</p></div>`;
+    list.innerHTML = `<div class="empty-state"><div class="emoji">📭</div><p>${isRangeMode ? 'No entries in this range.' : 'No entries for ' + monthLabel(currentMonth) + '.<br>Tap + to add your first entry.'}</p></div>`;
     return;
   }
 
@@ -1486,36 +1526,61 @@ function renderTransactions() {
   });
 
   const todayStr = new Date().toISOString().split('T')[0];
-
-  // Split into past/today and future
   const pastDates   = Object.keys(groups).filter(d => d <= todayStr).sort((a,b) => b.localeCompare(a));
   const futureDates = Object.keys(groups).filter(d => d >  todayStr).sort((a,b) => a.localeCompare(b));
 
-  const renderGroup = (date, items) => {
+  // In range mode: group dates by month for running total dividers
+  const renderGroup = (date, items, showMonthDivider) => {
     const d = new Date(date + 'T00:00:00');
     const today = new Date(); today.setHours(0,0,0,0);
     const diff = Math.round((today - d) / 86400000);
     let label;
-    if (diff === 0) label = 'Today';
-    else if (diff === 1) label = 'Yesterday';
-    else if (diff < 0) label = '📅 ' + d.toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short' });
-    else label = d.toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short' });
-    // Sort within day by createdAt descending — latest entry at top
+    if (!isRangeMode) {
+      if (diff === 0) label = 'Today';
+      else if (diff === 1) label = 'Yesterday';
+      else if (diff < 0) label = '📅 ' + d.toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short' });
+      else label = d.toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short' });
+    } else {
+      label = d.toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    }
     const sorted = [...items].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    return `<div class="tx-section">
+    return (showMonthDivider || '') + `<div class="tx-section">
       <div class="tx-date-label">${label}</div>
       ${sorted.map(t => txItemHTML(t)).join('')}
     </div>`;
   };
 
-  const pastHTML   = pastDates.map(d => renderGroup(d, groups[d])).join('');
+  let html = '';
+  if (isRangeMode) {
+    // Insert a sticky month header with running total whenever the month changes
+    let lastMonth = null;
+    for (const date of pastDates) {
+      const ym = date.slice(0, 7);
+      let monthDivider = '';
+      if (ym !== lastMonth) {
+        lastMonth = ym;
+        const mTxs = txs.filter(t => t.date.startsWith(ym));
+        const mInc = mTxs.filter(t => t.type === 'income').reduce((s,t) => s + t.convertedAmount, 0);
+        const mExp = mTxs.filter(t => t.type === 'expense').reduce((s,t) => s + t.convertedAmount, 0);
+        const mNet = mInc - mExp;
+        monthDivider = `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0 4px;border-top:1px solid var(--paper-darker);margin-top:8px;">
+          <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-lighter);">${monthLabel(ym)}</span>
+          <span style="font-family:var(--font-mono);font-size:11px;color:${mNet>=0?'var(--warm-green)':'var(--warm-red)'};">${mNet>=0?'+':''}${fmtNum(mNet)}</span>
+        </div>`;
+      }
+      html += renderGroup(date, groups[date], monthDivider);
+    }
+  } else {
+    html = pastDates.map(d => renderGroup(d, groups[d], null)).join('');
+  }
+
   const futureHTML = futureDates.length
     ? `<div style="margin:12px 0 4px;padding:6px 0;border-top:1px dashed var(--paper-darker);display:flex;align-items:center;gap:8px;">
         <span style="font-size:10px;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-lighter);font-weight:500;">Upcoming</span>
-       </div>` + futureDates.map(d => renderGroup(d, groups[d])).join('')
+       </div>` + futureDates.map(d => renderGroup(d, groups[d], null)).join('')
     : '';
 
-  list.innerHTML = pastHTML + futureHTML;
+  list.innerHTML = html + futureHTML;
 }
 
 function txItemHTML(t) {
@@ -1554,6 +1619,8 @@ function toggleSearch() {
     document.getElementById('txList').style.display = 'none';
     document.querySelector('.filter-bar').style.display = 'none';
     document.querySelector('.summary-strip').style.display = 'none';
+    const rangeBar = document.getElementById('rangeBar');
+    if (rangeBar) rangeBar.style.display = 'none';
     btn.style.color = 'var(--sage)';
     setTimeout(() => document.getElementById('searchInput').focus(), 50);
     renderSearchResults('');
@@ -1576,6 +1643,8 @@ function clearSearch() {
   document.getElementById('txList').style.display = '';
   document.querySelector('.filter-bar').style.display = '';
   document.querySelector('.summary-strip').style.display = '';
+  const rangeBar = document.getElementById('rangeBar');
+  if (rangeBar) rangeBar.style.display = '';
   const inp = document.getElementById('searchInput');
   if (inp) inp.value = '';
 }
@@ -1628,6 +1697,13 @@ function renderSearchResults(query) {
 function setFilter(f, el) {
   txFilter = f;
   document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderTransactions();
+}
+
+function setDateRange(range, el) {
+  txDateRange = range;
+  document.querySelectorAll('.range-chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   renderTransactions();
 }
@@ -1988,93 +2064,80 @@ function closeTxModal() {
 // RECURRING SUGGESTIONS
 // ════════════════════════════════════════════════════════════
 
-function checkRecurringSuggestions() {
-  const now = new Date();
-  const ym = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-  const dismissKey = 'recur_' + ym;
+// ════════════════════════════════════════════════════════════
+// RECURRING AUTO-EXECUTE
+// ════════════════════════════════════════════════════════════
 
-  if (data.recurringDismissed.includes(dismissKey)) return;
+function executeRecurringEntries() {
+  const today = new Date();
+  const todayYm = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
 
-  const recurring = data.transactions.filter(t => t.recurring);
-  if (!recurring.length) return;
+  // Only process source transactions (ones the user created as recurring)
+  const sources = data.transactions.filter(t => t.recurring && t.recurringMonths > 0);
+  if (!sources.empty) {}
 
-  // Find recurring txs that haven't been logged this month
-  const thisMonthTxCats = getMonthTxs(ym).map(t => t.categoryId + '_' + t.subcategory + '_' + t.type);
-  const pending = recurring.filter(t => {
-    const key = t.categoryId + '_' + t.subcategory + '_' + t.type;
-    if (thisMonthTxCats.includes(key) || t.date.startsWith(ym)) return false;
-    // Check if the recurring entry has expired based on recurringMonths
-    if (t.recurringMonths && t.recurringMonths > 0) {
-      const startDate = new Date(t.date);
-      const expiryDate = new Date(startDate);
-      expiryDate.setMonth(expiryDate.getMonth() + t.recurringMonths);
-      if (new Date() > expiryDate) return false;
+  let created = 0;
+
+  for (const src of sources) {
+    const startDate = new Date(src.date + 'T00:00:00');
+    const startYm   = src.date.slice(0, 7);
+
+    // Walk every month from the month AFTER the source up to today
+    let cursor = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 1);
+
+    while (true) {
+      const cursorYm = cursor.getFullYear() + '-' + String(cursor.getMonth() + 1).padStart(2, '0');
+
+      // Don't go past today's month
+      if (cursorYm > todayYm) break;
+
+      // Don't exceed the recurring duration
+      const monthsElapsed = (cursor.getFullYear() - startDate.getFullYear()) * 12
+        + (cursor.getMonth() - startDate.getMonth());
+      if (monthsElapsed >= src.recurringMonths) break;
+
+      // Check if an auto-generated copy already exists for this month
+      const alreadyExists = data.transactions.some(t =>
+        t._recurringSourceId === src.id && t.date.startsWith(cursorYm)
+      );
+
+      if (!alreadyExists) {
+        // Use the same day-of-month as the source, clamped to end of month
+        const srcDay    = startDate.getDate();
+        const daysInMon = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
+        const day       = Math.min(srcDay, daysInMon);
+        const dateStr   = cursorYm + '-' + String(day).padStart(2, '0');
+
+        const newTx = {
+          ...src,
+          id: uid(),
+          date: dateStr,
+          createdAt: Date.now(),
+          _recurringSourceId: src.id,   // link back to source
+          recurring: false,             // copies are not themselves recurring sources
+          recurringMonths: 0,
+          hasReceipt: false             // receipts are not cloned
+        };
+        data.transactions.push(newTx);
+        created++;
+      }
+
+      // Advance one month
+      cursor.setMonth(cursor.getMonth() + 1);
     }
-    return true;
-  });
+  }
 
-  // deduplicate by key
-  const seen = new Set();
-  const unique = pending.filter(t => {
-    const key = t.categoryId + '_' + t.subcategory + '_' + t.type + '_' + t.amount;
-    if (seen.has(key)) return false;
-    seen.add(key); return true;
-  });
-
-  if (!unique.length) return;
-
-  const container = document.getElementById('recurringSuggestion');
-  const listEl = document.getElementById('recurringList');
-  document.getElementById('recurringMonth').textContent = `${unique.length} recurring entries from last month — log for ${monthLabel(ym)}?`;
-
-  listEl.innerHTML = unique.map(t => {
-    const cat = getCatById(t.categoryId);
-    return `<div class="recurring-item" id="ri_${t.id}">
-      <div class="recurring-item-info">
-        ${cat ? cat.emoji : ''} ${cat ? cat.name : ''}${t.subcategory ? ' · ' + t.subcategory : ''}
-        <br><span style="font-size:11px;color:var(--ink-lighter)">${t.context === 'work' ? '💼 Work' : '👤 Personal'}</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <div class="recurring-item-amount">${fmtDef(t.convertedAmount)}</div>
-        <div class="recurring-item-btns">
-          <button class="btn-xs confirm" onclick="logRecurring('${t.id}','${ym}')">✓ Log</button>
-          <button class="btn-xs skip" onclick="skipRecurring('${t.id}')">Skip</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-
-  container.style.display = 'block';
-  document.getElementById('page-transactions').prepend(container);
-}
-
-function logRecurring(origId, ym) {
-  const orig = data.transactions.find(t => t.id === origId);
-  if (!orig) return;
-  const newTx = { ...orig, id: uid(), date: ym + '-01', createdAt: Date.now() };
-  data.transactions.push(newTx);
-  save();
-  document.getElementById('ri_' + origId)?.remove();
-  renderTransactions();
-  showToast('Recurring entry logged');
-  const list = document.getElementById('recurringList');
-  if (!list.children.length) {
-    document.getElementById('recurringSuggestion').style.display = 'none';
-    data.recurringDismissed.push('recur_' + ym);
+  if (created > 0) {
     save();
+    renderTransactions();
+    showToast(`↻ ${created} recurring entr${created !== 1 ? 'ies' : 'y'} added`);
   }
 }
 
-function skipRecurring(origId) {
-  document.getElementById('ri_' + origId)?.remove();
-  const list = document.getElementById('recurringList');
-  if (!list.children.length) {
-    document.getElementById('recurringSuggestion').style.display = 'none';
-    const ym = new Date().toISOString().slice(0,7);
-    data.recurringDismissed.push('recur_' + ym);
-    save();
-  }
-}
+// Keep old suggestion UI functions as no-ops (HTML references them) — safe to leave
+function checkRecurringSuggestions() { executeRecurringEntries(); }
+function logRecurring() {}
+function skipRecurring() {}
 
 // ════════════════════════════════════════════════════════════
 // ANALYTICS
@@ -3278,7 +3341,10 @@ function renderClaimsTab() {
         // Breakdown header
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
           '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-lighter);font-weight:500;">Breakdown</div>' +
-          '<button onclick="exportClaimsCSV(\'' + fromStr + '\',\'' + toStr + '\')" style="padding:5px 12px;background:var(--ink);color:var(--paper);border:none;border-radius:6px;font-size:11px;font-family:var(--font-body);cursor:pointer;">↓ CSV</button>' +
+          '<div style="display:flex;gap:6px;">' +
+            '<button onclick="exportClaimsCSV(\'' + fromStr + '\',\'' + toStr + '\')" style="padding:5px 12px;background:var(--paper-dark);color:var(--ink);border:1px solid var(--paper-darker);border-radius:6px;font-size:11px;font-family:var(--font-body);cursor:pointer;">↓ CSV</button>' +
+            '<button onclick="exportClaimsZIP(\'' + fromStr + '\',\'' + toStr + '\')" style="padding:5px 12px;background:var(--ink);color:var(--paper);border:none;border-radius:6px;font-size:11px;font-family:var(--font-body);cursor:pointer;">↓ ZIP</button>' +
+          '</div>' +
         '</div>' +
 
         // Category rows
@@ -3452,36 +3518,117 @@ function dismissAndLogClaim(cycleYm) {
   }, 100);
 }
 
-function exportClaimsCSV(fromDate, toDate) {
-  const workExp = data.transactions.filter(t =>
+function buildClaimsData(fromDate, toDate) {
+  // Shared data builder — used by both CSV and ZIP export
+  return data.transactions.filter(t =>
     t.type === 'expense' && t.context === 'work' && t.claimable &&
     t.date >= fromDate && t.date <= toDate
   ).sort((a, b) => a.date.localeCompare(b.date));
+}
 
+function sanitiseFilename(str) {
+  // Remove characters unsafe in filenames, collapse spaces
+  return (str || '').replace(/[\/\\:*?"<>|]/g, '').replace(/\s+/g, '-').slice(0, 30);
+}
+
+function exportClaimsCSV(fromDate, toDate) {
+  const workExp = buildClaimsData(fromDate, toDate);
   if (!workExp.length) { showToast('No expenses to export'); return; }
 
   const def = data.settings.defaultCurrency;
-  const headers = ['Date','Category','Subcategory','Amount','Currency',`Amount (${def})`,'Notes'];
-  const rows = workExp.map(t => {
+  const headers = ['Ref','Date','Category','Subcategory','Amount','Currency',`Amount (${def})`,'Notes','Receipt'];
+  const rows = workExp.map((t, i) => {
     const cat = getCatById(t.categoryId);
+    const ref = String(i + 1).padStart(2, '0');
     return [
+      ref,
       t.date,
       cat?.name || t.categoryId,
       t.subcategory || '',
       t.amount,
       t.currency,
       t.convertedAmount.toFixed(2),
-      t.notes || ''
+      t.notes || '',
+      t.hasReceipt ? ref + '_' + t.date + '_' + sanitiseFilename(cat?.name) + '_' + sanitiseFilename(t.subcategory) : ''
     ].map(v => '"' + String(v).replace(/"/g, '""') + '"');
   });
 
   const total = workExp.reduce((s, t) => s + t.convertedAmount, 0);
-  rows.push(['', '', '"TOTAL"', '', '', `"${total.toFixed(2)}"`, '']);
+  rows.push(['"—"', '', '', '"TOTAL"', '', '', `"${total.toFixed(2)}"`, '', '']);
 
   const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-  const filename = `kira-claims-${fromDate}-to-${toDate}.csv`;
-  downloadFile(csv, filename, 'text/csv');
-  showToast('Claims report exported');
+  downloadFile(csv, `kira-claims-${fromDate}-to-${toDate}.csv`, 'text/csv');
+  showToast('Claims CSV exported');
+}
+
+async function exportClaimsZIP(fromDate, toDate) {
+  if (typeof JSZip === 'undefined') { showToast('JSZip not loaded — check connection'); return; }
+  const workExp = buildClaimsData(fromDate, toDate);
+  if (!workExp.length) { showToast('No expenses to export'); return; }
+
+  showToast('Preparing ZIP…');
+
+  const def = data.settings.defaultCurrency;
+  const zip = new JSZip();
+
+  // ── Build CSV with Ref column ──
+  const headers = ['Ref','Date','Category','Subcategory','Amount','Currency',`Amount (${def})`,'Notes','Receipt File'];
+  const rows = [];
+  let receiptCount = 0;
+
+  for (let i = 0; i < workExp.length; i++) {
+    const t   = workExp[i];
+    const cat = getCatById(t.categoryId);
+    const ref = String(i + 1).padStart(2, '0');
+    const catName  = sanitiseFilename(cat?.name || 'Other');
+    const subName  = sanitiseFilename(t.subcategory || '');
+    const baseName = ref + '_' + t.date + '_' + catName + (subName ? '_' + subName : '');
+
+    let receiptFilename = '';
+
+    if (t.hasReceipt) {
+      const dataUri = await loadReceipt(t.id);
+      if (dataUri) {
+        // Determine extension from data URI
+        const isPdf = dataUri.startsWith('data:application/pdf');
+        const ext   = isPdf ? 'pdf' : 'jpg';
+        receiptFilename = 'receipts/' + baseName + '.' + ext;
+
+        // Strip data URI header to get raw base64
+        const base64 = dataUri.split(',')[1];
+        zip.file(receiptFilename, base64, { base64: true });
+        receiptCount++;
+      }
+    }
+
+    rows.push([
+      ref,
+      t.date,
+      cat?.name || t.categoryId,
+      t.subcategory || '',
+      t.amount,
+      t.currency,
+      t.convertedAmount.toFixed(2),
+      t.notes || '',
+      receiptFilename ? receiptFilename.replace('receipts/', '') : '—'
+    ].map(v => '"' + String(v).replace(/"/g, '""') + '"'));
+  }
+
+  const total = workExp.reduce((s, t) => s + t.convertedAmount, 0);
+  rows.push(['"—"', '', '', '"TOTAL"', '', '', `"${total.toFixed(2)}"`, '', '']);
+
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const cycleYm = window._claimCycleYm || fromDate.slice(0, 7);
+  zip.file('claim-report-' + cycleYm + '.csv', csv);
+
+  // ── Generate and download ZIP ──
+  const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'kira-claims-' + cycleYm + '.zip';
+  document.body.appendChild(a); a.click(); a.remove();
+
+  showToast(`ZIP ready · ${workExp.length} entries · ${receiptCount} receipt${receiptCount !== 1 ? 's' : ''}`);
 }
 
 // ════════════════════════════════════════════════════════════
