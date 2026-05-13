@@ -1,6 +1,6 @@
 // Kira PWA — Service Worker
 // Cache version: bump this string to force a cache refresh on next deploy
-const CACHE_NAME = 'kira-v3';
+const CACHE_NAME = 'kira-v4';
 
 // Files to pre-cache on install (app shell)
 const PRECACHE = [
