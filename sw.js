@@ -1,5 +1,5 @@
 // Kira PWA — Service Worker
-const CACHE_NAME = 'kira-v6';
+const CACHE_NAME = 'kira-v7';
 
 const PRECACHE = [
   './',
