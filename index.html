@@ -270,6 +270,24 @@ html, body {
   cursor: pointer; transition: background 0.15s;
 }
 .tx-item:active { background: var(--paper-dark); }
+
+/* Swipe-to-delete */
+.tx-item-wrap {
+  position: relative; overflow: hidden; border-radius: var(--radius-sm);
+  margin-bottom: 1px;
+}
+.tx-delete-reveal {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  width: 72px; background: var(--warm-red); display: flex;
+  align-items: center; justify-content: center; flex-direction: column;
+  gap: 2px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  opacity: 0; pointer-events: none; transition: opacity 0.15s;
+}
+.tx-delete-reveal span { font-size: 16px; }
+.tx-delete-reveal small { font-size: 9px; color: rgba(255,255,255,0.8); font-family: var(--font-body); }
+.tx-item-wrap.swiped .tx-delete-reveal { opacity: 1; pointer-events: auto; }
+.tx-item-wrap.swiped .tx-item { transform: translateX(-72px); }
+.tx-item { transition: transform 0.2s ease; }
 .tx-icon {
   width: 36px; height: 36px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
@@ -1315,11 +1333,13 @@ function saveLocal() {
   _writeLocalStorage();
 }
 
-// save — persist to localStorage AND trigger FSA auto-backup file write
-// Use for any transaction data change (add, edit, delete, recurring, prune)
+// save — persist to localStorage AND trigger FSA auto-backup file write (debounced 3s)
+let _autoBackupTimer = null;
 function save() {
   _writeLocalStorage();
-  if (autoBackupHandle) writeAutoBackup();
+  if (!autoBackupHandle) return;
+  clearTimeout(_autoBackupTimer);
+  _autoBackupTimer = setTimeout(() => { _autoBackupTimer = null; writeAutoBackup(); }, 3000);
 }
 
 
@@ -1592,6 +1612,8 @@ function renderTransactions() {
     : '';
 
   list.innerHTML = html + futureHTML;
+  // Init swipe-to-delete on all rendered rows
+  requestAnimationFrame(() => initSwipeDelete(list));
 }
 
 function txItemHTML(t) {
@@ -1600,23 +1622,139 @@ function txItemHTML(t) {
   const catName = cat ? cat.name : '—';
   const subName = t.subcategory || '';
   const claimBadge = t.claimable ? `<span class="tx-claim-badge ${t.claimStatus || 'pending'}">${(t.claimStatus || 'pending')}</span>` : '';
-  const recurBadge = t.recurring ? `<span class="tx-recurring-badge">↻ recurring</span>` : '';
+  const recurBadge = t.recurring
+    ? `<span class="tx-recurring-badge">↻ recurring</span>`
+    : t._recurringSourceId
+      ? `<span class="tx-recurring-badge" style="opacity:0.6;" title="Auto-generated recurring entry">↻</span>`
+      : '';
   const origNote = t.currency !== data.settings.defaultCurrency ? `<span class="orig-currency">${fmt(t.amount, t.currency)}</span>` : '';
-  return `<div class="tx-item" onclick="editTx('${t.id}')">
-    <div class="tx-icon ${t.type}">${emoji}</div>
-    <div class="tx-info">
-      <div class="tx-title">${catName}${subName ? ' · ' + subName : ''}</div>
-      <div class="tx-sub">${t.context === 'work' ? '💼 Work' : '👤 Personal'}${claimBadge}${recurBadge}${t.hasReceipt ? ' <span style="font-size:10px;color:var(--sage);">📎</span>' : ''}</div>
-      ${t.tags && t.tags.length ? '<div>' + t.tags.map(tg => `<span class="tag-pill">${tg}</span>`).join('') + '</div>' : ''}
+  return `<div class="tx-item-wrap" data-txid="${t.id}">
+    <div class="tx-delete-reveal" onclick="swipeDeleteConfirm('${t.id}')">
+      <span>🗑</span><small>Delete</small>
     </div>
-    <div class="tx-right">
-      <div class="tx-amount ${t.type}">${fmtDef(t.convertedAmount).replace(/[A-Z]+\s?/, '')}</div>
-      ${origNote}
+    <div class="tx-item" onclick="editTx('${t.id}')">
+      <div class="tx-icon ${t.type}">${emoji}</div>
+      <div class="tx-info">
+        <div class="tx-title">${catName}${subName ? ' · ' + subName : ''}</div>
+        <div class="tx-sub">${t.context === 'work' ? '💼 Work' : '👤 Personal'}${claimBadge}${recurBadge}${t.hasReceipt ? ' <span style="font-size:10px;color:var(--sage);">📎</span>' : ''}</div>
+        ${t.tags && t.tags.length ? '<div>' + t.tags.map(tg => `<span class="tag-pill">${tg}</span>`).join('') + '</div>' : ''}
+      </div>
+      <div class="tx-right">
+        <div class="tx-amount ${t.type}">${fmtDef(t.convertedAmount).replace(/[A-Z]+\s?/, '')}</div>
+        ${origNote}
+      </div>
     </div>
   </div>`;
 }
 
-// ── GLOBAL SEARCH ──
+// ── SWIPE TO DELETE ──
+function initSwipeDelete(container) {
+  const wraps = (container || document).querySelectorAll('.tx-item-wrap');
+  wraps.forEach(wrap => {
+    const item = wrap.querySelector('.tx-item');
+    if (!item || wrap._swipeInited) return;
+    wrap._swipeInited = true;
+
+    let startX = 0, startY = 0, dx = 0, tracking = false, locked = false;
+    const THRESHOLD = 60; // px to trigger reveal
+
+    item.addEventListener('touchstart', e => {
+      // Don't swipe if tapping a button inside the row
+      if (e.target.closest('button')) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      dx = 0; tracking = true; locked = false;
+    }, { passive: true });
+
+    item.addEventListener('touchmove', e => {
+      if (!tracking) return;
+      dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+
+      // If more vertical than horizontal — scroll, don't swipe
+      if (!locked && Math.abs(dy) > Math.abs(dx)) { tracking = false; return; }
+      locked = true;
+
+      // Only allow left swipe (negative dx)
+      if (dx > 0) { dx = 0; return; }
+      const clamped = Math.max(dx, -THRESHOLD - 16);
+      item.style.transition = 'none';
+      item.style.transform = `translateX(${clamped}px)`;
+    }, { passive: true });
+
+    item.addEventListener('touchend', () => {
+      if (!tracking) return;
+      tracking = false;
+      item.style.transition = '';
+
+      if (dx < -THRESHOLD) {
+        // Snap to reveal
+        wrap.classList.add('swiped');
+        item.style.transform = '';
+        // Dismiss other open swipes
+        document.querySelectorAll('.tx-item-wrap.swiped').forEach(w => {
+          if (w !== wrap) { w.classList.remove('swiped'); w.querySelector('.tx-item').style.transform = ''; }
+        });
+      } else {
+        // Snap back
+        wrap.classList.remove('swiped');
+        item.style.transform = '';
+      }
+      dx = 0;
+    });
+  });
+
+  // Tap anywhere outside to close open swipes
+  document.addEventListener('touchstart', e => {
+    if (!e.target.closest('.tx-item-wrap')) {
+      document.querySelectorAll('.tx-item-wrap.swiped').forEach(w => {
+        w.classList.remove('swiped');
+        const it = w.querySelector('.tx-item');
+        if (it) it.style.transform = '';
+      });
+    }
+  }, { passive: true });
+}
+
+function swipeDeleteConfirm(txId) {
+  const tx = data.transactions.find(t => t.id === txId);
+  if (!tx) return;
+  const cat = getCatById(tx.categoryId);
+  const label = (cat?.name || '—') + (tx.subcategory ? ' · ' + tx.subcategory : '');
+
+  // Inline confirm — replace the delete reveal with a confirm strip
+  const wrap = document.querySelector(`.tx-item-wrap[data-txid="${txId}"]`);
+  if (!wrap) return;
+  const reveal = wrap.querySelector('.tx-delete-reveal');
+  reveal.innerHTML =
+    '<button onclick="swipeDeleteExecute(\'' + txId + '\')" style="background:none;border:none;color:#fff;font-size:11px;font-weight:600;cursor:pointer;padding:4px 8px;font-family:var(--font-body);">Confirm<br>Delete</button>' +
+    '<button onclick="swipeDeleteCancel(\'' + txId + '\')" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:10px;cursor:pointer;padding:4px 6px;font-family:var(--font-body);">Cancel</button>';
+}
+
+function swipeDeleteExecute(txId) {
+  const tx = data.transactions.find(t => t.id === txId);
+  if (!tx) return;
+  if (tx.hasReceipt) deleteReceipt(txId);
+  data.transactions = data.transactions.filter(t => t.id !== txId);
+  save();
+  renderTransactions();
+  showToast('Entry deleted');
+}
+
+function swipeDeleteCancel(txId) {
+  const wrap = document.querySelector(`.tx-item-wrap[data-txid="${txId}"]`);
+  if (!wrap) return;
+  wrap.classList.remove('swiped');
+  const item = wrap.querySelector('.tx-item');
+  if (item) item.style.transform = '';
+  // Re-render just this row to restore the delete reveal HTML
+  const tx = data.transactions.find(t => t.id === txId);
+  if (!tx) return;
+  wrap.outerHTML = txItemHTML(tx);
+  // Re-init swipe on the new element
+  const newWrap = document.querySelector(`.tx-item-wrap[data-txid="${txId}"]`);
+  if (newWrap) initSwipeDelete(newWrap.parentElement);
+}
 function toggleSearch() {
   searchActive = !searchActive;
   const bar = document.getElementById('searchBar');
@@ -1703,6 +1841,7 @@ function renderSearchResults(query) {
       const label = d.toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
       return `<div class="tx-section"><div class="tx-date-label">${label}</div>${items.map(t => txItemHTML(t)).join('')}</div>`;
     }).join('');
+  requestAnimationFrame(() => initSwipeDelete(el));
 }
 
 function setFilter(f, el) {
@@ -5007,16 +5146,13 @@ async function buildBackupPayload() {
 // ── Restore: split receipts back into IndexedDB ──
 async function applyRestoredBackup(restored) {
   const receipts = restored._receipts || {};
-  // Clean payload before storing as data (strip backup-only keys)
   const clean = { ...restored };
   delete clean._receipts;
   delete clean._backupVersion;
   delete clean._backupDate;
 
-  // Ensure hasReceipt flag is consistent with what we actually have
   clean.transactions.forEach(t => {
     if (receipts[t.id]) t.hasReceipt = true;
-    // If old backup had receiptPhoto inline (v1 format), migrate it
     if (t.receiptPhoto) {
       receipts[t.id] = t.receiptPhoto;
       t.hasReceipt = true;
@@ -5027,13 +5163,72 @@ async function applyRestoredBackup(restored) {
   data = clean;
   save();
 
-  // Write all receipts into IndexedDB
-  let restored_count = 0;
+  let restoredCount = 0;
   for (const [txId, dataUri] of Object.entries(receipts)) {
     await saveReceipt(txId, dataUri);
-    restored_count++;
+    restoredCount++;
   }
-  return restored_count;
+  return restoredCount;
+}
+
+function validateBackup(restored) {
+  const errors = [];
+  if (!restored || typeof restored !== 'object') { errors.push('File is not valid JSON'); return { valid: false, errors }; }
+  if (!Array.isArray(restored.transactions))     { errors.push('Missing transactions array'); return { valid: false, errors }; }
+  if (!restored.settings || typeof restored.settings !== 'object') errors.push('Missing settings — defaults will apply');
+  if (!restored.categories || typeof restored.categories !== 'object') errors.push('Missing categories — defaults will apply');
+  const s = restored.transactions[0];
+  if (s) {
+    if (!s.id)   errors.push('Transactions missing IDs');
+    if (!s.date) errors.push('Transactions missing dates');
+    if (!s.type) errors.push('Transactions missing type');
+  }
+  const receiptCount = Object.keys(restored._receipts || {}).length;
+  const summary = {
+    transactions: restored.transactions.length,
+    receipts: receiptCount,
+    backupDate: restored._backupDate
+      ? new Date(restored._backupDate).toLocaleDateString('en-MY', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
+      : 'Unknown',
+    version: restored._backupVersion || 1
+  };
+  const critical = errors.filter(e => !e.includes('settings') && !e.includes('categories'));
+  return { valid: critical.length === 0, errors, summary };
+}
+
+function restoreJSON() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = async ev => {
+      try {
+        const restored = JSON.parse(ev.target.result);
+        const { valid, errors, summary } = validateBackup(restored);
+        if (!valid) { showToast('❌ ' + errors[0]); return; }
+        const warnings = errors.length ? '\n\n⚠️ ' + errors.join('\n⚠️ ') : '';
+        const msg =
+          `Restore this backup?\n\n` +
+          `📅 Date: ${summary.backupDate}\n` +
+          `📋 Transactions: ${summary.transactions}\n` +
+          `📎 Receipts: ${summary.receipts}\n` +
+          `📦 Format: v${summary.version}` +
+          warnings +
+          `\n\n⚠️ This will REPLACE all current data.`;
+        if (!confirm(msg)) return;
+        showToast('Restoring…');
+        const receiptCount = await applyRestoredBackup(restored);
+        renderTransactions(); renderSettings();
+        showToast(`Restored ✓ · ${summary.transactions} entries · ${receiptCount} receipts`);
+      } catch(e) {
+        console.error('Restore failed', e);
+        showToast('Could not read backup file');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
 }
 
 async function exportJSON() {
@@ -5053,29 +5248,6 @@ async function exportJSON() {
   }
 }
 
-function restoreJSON() {
-  const input = document.createElement('input');
-  input.type = 'file'; input.accept = '.json';
-  input.onchange = e => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = async ev => {
-      try {
-        const restored = JSON.parse(ev.target.result);
-        if (!restored.transactions) throw new Error('Invalid');
-        showToast('Restoring…');
-        const receiptCount = await applyRestoredBackup(restored);
-        renderTransactions(); renderSettings();
-        showToast(`Restored · ${receiptCount} receipt${receiptCount !== 1 ? 's' : ''} recovered`);
-      } catch(e) {
-        console.error('Restore failed', e);
-        showToast('Invalid backup file');
-      }
-    };
-    reader.readAsText(file);
-  };
-  input.click();
-}
 
 function downloadFile(content, filename, mime) {
   const a = document.createElement('a');
